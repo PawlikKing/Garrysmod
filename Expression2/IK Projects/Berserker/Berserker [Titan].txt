@@ -1,0 +1,2067 @@
+@name Berserker [Titan]
+@inputs Camera_wirelink:wirelink Cannon:entity
+@outputs Active
+@persist [E Chair TorsoBase Tower_rotor]:entity
+@persist I Mass LegSpacing Tower_mass
+@persist [MainMaterial FrameMaterial PartsMaterial]:string
+@persist [Vel VelL]:vector VeLx VeLy 
+@persist [TorsoAngles AngVel]:angle
+@persist [RangerL RangerR]:ranger 
+@persist [LLEndPos RLEndPos]:vector
+@persist FGDist LRDist RRDist
+@persist LN RN
+@persist [BezierPosL BezierPosR]:vector
+@persist [LLLastPos RLLastPos]:vector
+@persist Switch 
+@persist In_move
+@persist W S A D Space G Driver:entity 
+@persist ShieldAng ShieldLock
+@persist RailTrain_Y RailTrain_Pitch RailTrain_X Cannon_launch
+@persist SoundRequest:table SoundEntity_ID Sound_Tasks SSsSsSssSs
+@model models/hunter/plates/plate1x1.mdl
+
+if( duped() ){ reset() }
+
+if(first()|dupefinished()){
+    
+#==========MainSets===========#   
+    
+    Mass = 50000
+    
+    LegSpacing = 65
+    
+    Active = 1
+    
+    Tower_mass = 500
+ 
+#==========MajorSets==========#   
+
+    E = entity()
+
+    E:setMass(Mass)
+    
+    E:propGravity(0)
+    
+    E:propDrag(0)
+    
+    propSpawnUndo(1)
+    
+#==========Materials==========#   
+    
+    MainMaterial = "models/XQM/CellShadedCamo_diffuse"
+    
+    FrameMaterial = "phoenix_storms/tiles2"
+    
+    PartsMaterial = "sprops/textures/sprops_rubber2"
+    
+#==========TorsoBase==========#   
+
+    Tower_rotor = propSpawn("models/hunter/plates/plate1x1.mdl",E:toWorld(vec(0,0,30)),E:toWorld(ang()),1)
+    
+    axis(Tower_rotor,vec(),E,vec(),0)
+    
+    Tower_rotor:setMass(Tower_mass)
+    
+    Tower_rotor:setAlpha(0)
+
+#==========HoloBones==========#   
+
+    I = 0	
+
+    TorsoBase = holoCreate(I)
+  		holoParent(I, Tower_rotor)
+  		holoColor(I, vec(35))
+  		holoScale(I, vec(4))
+  		holoPos(I, Tower_rotor:toWorld(vec(0,0,0)))
+  		holoAng(I, Tower_rotor:toWorld(ang(0, 0, 0)))
+  		holoMaterial(I,"models/shiny")
+	  	holoModel(I,"models/holograms/hq_torus_thick.mdl")
+
+#==========HoloTimers=========#   
+
+    local T = 0
+
+    while(T < 13){
+    
+    T++
+    
+    timer(T:toString(),1200*T)
+    
+    }
+    
+#===========Spawner===========# 
+
+    Chair = seatSpawn("",TorsoBase:toWorld(vec(0, 0, 102)),TorsoBase:toWorld(ang(0,-90,0)),1)
+
+    Chair:parentTo(TorsoBase)
+
+#==========Functions==========#
+
+    function number icos(A,B,C){
+
+        return acos((A^2+B^2-C^2)/(2*A*B))
+    
+    }
+
+    function legCrete(A,B,C,D,Length1,Length2,Basis:entity,Pos:vector,Target:vector,Can){
+        
+        if(changed(Can) && Can){
+        
+            holoCreate(A)
+            holoParent(A,Basis)
+            holoPos(A,Pos)
+        
+            local K1 = holoCreate(B)
+            holoParent(B,A)
+            holoPos(B,Pos)        
+            
+            local K2 = holoCreate(C)
+            holoParent(C,B)
+            holoPos(C,K1:toWorld(vec(Length1,0,0)))        
+        
+            holoCreate(D)
+            holoParent(D,C)
+            holoPos(D,K2:toWorld(vec(Length2,0,0)))    
+            
+            holoAlpha(A,0)
+            holoAlpha(B,0)
+            holoAlpha(C,0)
+            holoAlpha(D,0)
+    
+       }
+    
+       holoAng(D,E:toWorld(ang()))
+    
+       local Dist = Pos:distance(Target)
+    
+       local AimAng = E:toLocal((Target - Pos):toAngle())
+    
+       holoAng(A,E:toWorld(ang(0,0,180))+ang(AimAng:pitch(),AimAng:yaw(),AimAng:yaw()))
+    
+       holoAng(B,holoEntity(A):toWorld(ang(icos(Dist,Length1,Length2),0,0)))
+    
+       holoAng(C,holoEntity(B):toWorld(ang(icos(Length1,Length2,Dist)+180,0,0)))
+    
+    
+       }
+    
+    function number alwaysPositive(A){
+        
+        if(A < 0){
+            
+            B = -A 
+            
+        }else{
+        
+            B = A 
+        
+        }
+        
+        return B
+        
+    }
+
+}
+
+#============Camera===========#   
+
+    if(changed(Camera_wirelink)){
+
+        Camera_wirelink["Activated",number] = 1 
+
+        Camera_wirelink["Angle",angle] = E:toWorld(ang())
+
+        Camera_wirelink["Position",vector] = E:toWorld(vec(0,0,250))
+
+        Camera_wirelink["Parent",entity] = E
+
+    }
+
+#===========Ticks==========#
+
+interval(60)
+
+#========Kinematics========#
+    
+    legCrete(1,2,3,4,70,130,E,E:toWorld(vec(0,LegSpacing,0)),BezierPosR,clk("1"))
+    
+    legCrete(5,6,7,8,70,130,E,E:toWorld(vec(0,-LegSpacing,0)),BezierPosL,clk("2"))
+    
+#=========DataSuck=========#
+
+TorsoAngles = E:angles()
+
+Vel = E:vel()
+
+AngVel = E:angVel() 
+
+#===========Speed==========#
+
+    local Torso_VelLocal = E:velL()
+    
+    local VelL_X = Torso_VelLocal:x()
+    
+    local VelL_Y = Torso_VelLocal:y()
+    
+    local AddIt_vector = vec(VelL_X,VelL_Y,0)/3
+    
+    local Torso_AngVel = E:angVel()
+    
+    local LocalForce_X = alwaysPositive(VelL_X)
+    
+    local LocalForce_Y = alwaysPositive(VelL_Y)
+    
+    local LocalForce_Z = alwaysPositive(Torso_VelLocal:z())
+    
+    local LocalAngForce_Pitch = alwaysPositive(Torso_AngVel:pitch()) 
+    
+    local LocalAngForce_Yaw = alwaysPositive(Torso_AngVel:yaw())
+    
+    local LocalAngForce_Roll = alwaysPositive(Torso_AngVel:roll())
+    
+    local Speed = (LocalForce_X + LocalForce_Y + LocalForce_Z) / 3 
+    
+    local Speed_ang = (LocalAngForce_Pitch + LocalAngForce_Yaw + LocalAngForce_Roll) / 3
+    
+    
+    if(round(VelL_X + VelL_Y,0)){
+        
+        In_move = 1
+        
+    }else{
+    
+        In_move = 0
+    
+    }
+    
+    
+    local LegMove_speed = 0.03 + Speed/1200
+
+#=========Rangers==========#   
+
+RangerR = rangerOffset(-200,E:toWorld(vec(0,LegSpacing,0) + AddIt_vector),E:up())
+
+RangerL = rangerOffset(-200,E:toWorld(vec(0,-LegSpacing,0) + AddIt_vector),E:up())
+
+RLEndPos = RangerR:pos()
+
+LLEndPos = RangerL:pos()
+
+RRDist = RangerR:distance() 
+
+LRDist = RangerL:distance() 
+
+FGDist = (RRDist + LRDist)/2
+
+#==========Bezier==========#   
+
+BezierPosR = bezier(RLLastPos,E:toWorld(vec(0,LegSpacing,-50)),RLEndPos,RN)
+
+BezierPosL = bezier(LLLastPos,E:toWorld(vec(0,-LegSpacing,-50)),LLEndPos,LN)
+
+if(Switch){
+    
+    if(RN < 1){
+        
+        RN = RN + LegMove_speed
+        
+    }elseif(In_move){
+    
+    Switch = 0
+    
+    RLLastPos = RLEndPos 
+    
+    }
+    
+    if(changed(Switch)){
+    
+        LN = 0
+    
+    }     
+
+}else{
+    
+    if(LN < 1){
+        
+        LN = LN + LegMove_speed
+        
+    }else{
+    
+    Switch = 1
+    
+    LLLastPos = LLEndPos
+    
+    }
+    
+    if(changed(Switch)){
+    
+        RN = 0 
+    
+    }   
+    
+}
+
+#==========Sound===========# 
+
+if( first() | dupefinished() )
+{
+    
+    SoundEntity_ID = 6000
+    
+}
+
+if( changed( Switch ) )
+{
+    
+    SoundRequest:pushTable( table( "ambient/machines/sputter1.wav" , LegMove_speed * 500 ) )
+    
+    SSsSsSssSs++
+    
+}
+
+if( changed( SSsSsSssSs ) && SSsSsSssSs == 3 )
+{
+    
+    SoundRequest:pushTable( table( "ambient/materials/metal_groan.wav" , LegMove_speed * ( 1200 + random( 300 ) ) ) )
+    
+    SSsSsSssSs = 0
+    
+}
+
+if( changed( ShieldLock ) )
+{
+    
+    SoundRequest:pushTable( table( "ambient/materials/metal_big_impact_scrape1.wav" , 0 ) )
+ 
+}
+
+if( changed( Cannon_launch ) )
+{
+    
+    SoundRequest:pushTable( table( "doors/doormove3.wav" , 50 ) )
+    
+}
+
+if( changed( SoundRequest:count() ) )
+{
+    
+    Sound_Tasks = SoundRequest:count()
+    
+}
+
+if( Sound_Tasks )
+{
+    
+    SoundEntity_ID++
+    
+    local Sound_Table = SoundRequest[ 1 , table ]
+    
+    local Sound_String = Sound_Table[ 1 , string ]
+    
+    local Sound_Pitch = Sound_Table[ 2 , number ]
+    
+    SoundRequest:remove( 1 )
+    
+    Sound_Entity = holoCreate( SoundEntity_ID ) holoParent( SoundEntity_ID , E )
+    
+    Sound_Entity:soundPlay( SoundEntity_ID , 100 , Sound_String )
+    
+    if( Sound_Pitch ){ soundPitch( SoundEntity_ID , Sound_Pitch ) }
+    
+    soundStop( SoundEntity_ID - 8 )
+    
+    holoDelete( SoundEntity_ID - 8 )
+    
+}
+
+#=========Sterring=========#   
+
+Driver = Chair:driver()
+
+W = Driver:keyPressed("W")
+
+S = Driver:keyPressed("S")
+
+A = Driver:keyPressed("A")
+
+D = Driver:keyPressed("D")
+
+Space = Driver:keyJump()
+
+G = Driver:keyPressed("G")
+
+if(changed(Space) && Space){
+    
+    ShieldLock++
+
+if(ShieldLock > 1){
+    
+    ShieldLock = 0
+    
+}
+
+}
+
+if(changed(G) && G){
+    
+    Cannon_launch++
+
+if(Cannon_launch > 1){
+    
+    Cannon_launch = 0
+    
+}
+    
+}
+
+#==========Rotor===========#
+    
+    local EyeAngles = Camera_wirelink["CamAng",angle]
+    
+    local Rotor_velocity = Tower_rotor:angVel()
+
+    Tower_rotor:applyAngForce( ( Tower_rotor:toLocal( ang(0 , EyeAngles:yaw() , 0) ) * 25 - Rotor_velocity * 5 ) * Tower_mass )
+ 
+#==========Forces==========#   
+
+if(ShieldLock){
+
+if(ShieldAng < 25){
+    
+    ShieldAng = ShieldAng + 0.5
+    
+}
+
+}elseif(ShieldAng > 0){
+
+    ShieldAng = ShieldAng - 0.5
+
+}
+
+E:applyForce((E:forward()*(W-S)*(50-ShieldAng)+E:up()*(175-FGDist-(RN+LN)*2)*5-Vel/5)*Mass)
+
+E:applyAngForce((-ang(TorsoAngles:pitch(),(D-A),TorsoAngles:roll())*50-AngVel*2)*Mass)
+
+holoAng(0, Tower_rotor:toWorld(ang(-1*((RN+LN)-1), 0 , LN-1-RN+1)))
+
+holoAng(120, TorsoBase:toWorld(ang(0, 25-ShieldAng, 0)))
+
+holoAng(122, TorsoBase:toWorld(ang(0, -25+ShieldAng, 0)))
+
+#=========RailTrain========#
+
+if(Cannon_launch){
+    
+    if(RailTrain_Y < 50){
+        
+        RailTrain_Y = RailTrain_Y + 5
+        
+    }else{
+    
+        if(RailTrain_Pitch < 90){
+            
+            RailTrain_Pitch = RailTrain_Pitch + 9
+            
+        }elseif(RailTrain_X < 40){
+        
+            RailTrain_X = RailTrain_X + 4
+        
+        }
+    
+    }
+    
+}else{
+
+    if(RailTrain_X > 0){
+        
+        RailTrain_X = RailTrain_X - 4
+        
+    }else{
+    
+        if(RailTrain_Pitch > 0){
+            
+            RailTrain_Pitch = RailTrain_Pitch - 9
+            
+        }elseif(RailTrain_Y > 0){
+        
+            RailTrain_Y = RailTrain_Y - 5
+        
+        }
+        
+    }
+
+}
+
+holoPos(142,TorsoBase:toWorld(vec(-54.8 + RailTrain_X, 67.0117, 117.5 + RailTrain_Y)))
+
+holoAng(142,TorsoBase:toWorld(ang(-90 + RailTrain_Pitch,0,0)))
+
+E:propFreeze(0)
+
+TorsoBase:propFreeze(0)
+
+             
+#=======ModelBuilder=======#
+
+if(changed(clk("3")) && clk("3")){
+    
+  I = 8
+	
+  local Base = TorsoBase
+
+		I++
+		holoCreate(I) #platex
+		holoParent(I, Base)
+		holoColor(I, vec(255, 255, 255))
+		holoAlpha(I, 255)
+		holoScale(I, vec(1, 0.6, 0.6))
+		holoPos(I, Base:toWorld(vec(19.2, 0, 86.9092)))
+		holoAng(I, Base:toWorld(ang(0, 0, 0)))
+		holoMaterial(I, MainMaterial)
+		holoModel(I, "models/hunter/plates/plate1x1.mdl")
+		holoSkin(I, 0)
+		I++
+			holoCreate(I) #xx
+		holoParent(I, Base)
+		holoColor(I, vec(255, 255, 255))
+		holoAlpha(I, 255)
+		holoScale(I, vec(0.1, 1.65, 2.1))
+		holoPos(I, Base:toWorld(vec(-2.8, -20.2, 78.904)))
+		holoAng(I, Base:toWorld(ang(0, -90, -180)))
+		holoMaterial(I, MainMaterial)
+		holoModel(I, "models/hunter/triangles/1x1x1.mdl")
+		holoSkin(I, 0)
+		I++
+			holoCreate(I) #breenchair
+		holoParent(I, Base)
+		holoColor(I, vec(255, 255, 255))
+		holoAlpha(I, 255)
+		holoScale(I, vec(1, 1, 1))
+		holoPos(I, Base:toWorld(vec(0, 0, 88)))
+		holoAng(I, Base:toWorld(ang(0, 0, 0)))
+		holoMaterial(I, "")
+		holoModel(I, "models/props_combine/breenchair.mdl")
+		holoSkin(I, 0)
+		I++
+			holoCreate(I) #cubexx
+		holoParent(I, Base)
+		holoColor(I, vec(255, 255, 255))
+		holoAlpha(I, 255)
+		holoScale(I, vec(0.4, 8.4, 0.5))
+		holoPos(I, Base:toWorld(vec(37.5322, -20.2, 79.104)))
+		holoAng(I, Base:toWorld(ang(0, -90, -90)))
+		holoMaterial(I, MainMaterial)
+		holoModel(I, "models/hunter/blocks/cube025x025x025.mdl")
+		holoSkin(I, 0)
+		I++
+			holoCreate(I) #mount connectiona
+		holoParent(I, Base)
+		holoColor(I, vec(255, 255, 255))
+		holoAlpha(I, 255)
+		holoScale(I, vec(2.4, 2.4, 2.4))
+		holoPos(I, Base:toWorld(vec(0, 0, 91.753)))
+		holoAng(I, Base:toWorld(ang(90, 0, 0)))
+		holoMaterial(I, FrameMaterial)
+		holoModel(I, "models/props_trainstation/mount_connection001a.mdl")
+		holoSkin(I, 0)
+		I++
+			holoCreate(I) #mount connectiona (1)
+		holoParent(I, Base)
+		holoColor(I, vec(255, 255, 255))
+		holoAlpha(I, 255)
+		holoScale(I, vec(1.8, 1.8, 1.8))
+		holoPos(I, Base:toWorld(vec(0.9, 33.878, 121.7139)))
+		holoAng(I, Base:toWorld(ang(0, 0, 0)))
+		holoMaterial(I, FrameMaterial)
+		holoModel(I, "models/props_trainstation/mount_connection001a.mdl")
+		holoSkin(I, 0)
+		I++
+			holoCreate(I) #cubexx (1)
+		holoParent(I, Base)
+		holoColor(I, vec(255, 255, 255))
+		holoAlpha(I, 255)
+		holoScale(I, vec(0.4, 2, 6.9))
+		holoPos(I, Base:toWorld(vec(0, 20.2, 140.4404)))
+		holoAng(I, Base:toWorld(ang(0, -90, -90)))
+		holoMaterial(I, MainMaterial)
+		holoModel(I, "models/hunter/blocks/cube025x025x025.mdl")
+		holoSkin(I, 0)
+		I++
+			holoCreate(I) #platex (1)
+		holoParent(I, Base)
+		holoColor(I, vec(255, 255, 255))
+		holoAlpha(I, 255)
+		holoScale(I, vec(2.4, 0.6, 1))
+		holoPos(I, Base:toWorld(vec(-8.4123, 0, 82.0635)))
+		holoAng(I, Base:toWorld(ang(-52.5, 180, 180)))
+		holoMaterial(I, MainMaterial)
+		holoModel(I, "models/hunter/plates/plate1x1.mdl")
+		holoSkin(I, 0)
+		I++
+			holoCreate(I) #xx (1)
+		holoParent(I, Base)
+		holoColor(I, vec(255, 255, 255))
+		holoAlpha(I, 255)
+		holoScale(I, vec(0.1, 1.65, 2.1))
+		holoPos(I, Base:toWorld(vec(-2.8, 20.2, 78.904)))
+		holoAng(I, Base:toWorld(ang(0, -90, -180)))
+		holoMaterial(I, MainMaterial)
+		holoModel(I, "models/hunter/triangles/1x1x1.mdl")
+		holoSkin(I, 0)
+		I++
+			holoCreate(I) #platex (2)
+		holoParent(I, Base)
+		holoColor(I, vec(255, 255, 255))
+		holoAlpha(I, 255)
+		holoScale(I, vec(1.4, 0.68, 2.9))
+		holoPos(I, Base:toWorld(vec(-29.313, 33.624, 121.803)))
+		holoAng(I, Base:toWorld(ang(90, 180, 180)))
+		holoMaterial(I, MainMaterial)
+		holoModel(I, "models/hunter/plates/plate1x1.mdl")
+		holoSkin(I, 0)
+		I++
+			holoCreate(I) #platex (3)
+		holoParent(I, Base)
+		holoColor(I, vec(255, 255, 255))
+		holoAlpha(I, 255)
+		holoScale(I, vec(1.9, 1.9, 1))
+		holoPos(I, Base:toWorld(vec(-5.782, 0, 153.685)))
+		holoAng(I, Base:toWorld(ang(0, -180, -180)))
+		holoMaterial(I, MainMaterial)
+		holoModel(I, "models/hunter/plates/plate1x1.mdl")
+		holoSkin(I, 0)
+		I++
+			holoCreate(I) #platex (4)
+		holoParent(I, Base)
+		holoColor(I, vec(255, 255, 255))
+		holoAlpha(I, 255)
+		holoScale(I, vec(1.4, 0.68, 2.9))
+		holoPos(I, Base:toWorld(vec(-29.313, -33.624, 121.803)))
+		holoAng(I, Base:toWorld(ang(90, 180, 180)))
+		holoMaterial(I, MainMaterial)
+		holoModel(I, "models/hunter/plates/plate1x1.mdl")
+		holoSkin(I, 0)
+		I++
+			holoCreate(I) #cubexx (2)
+		holoParent(I, Base)
+		holoColor(I, vec(255, 255, 255))
+		holoAlpha(I, 255)
+		holoScale(I, vec(0.4, 2, 6.9))
+		holoPos(I, Base:toWorld(vec(0, -20.2, 140.4404)))
+		holoAng(I, Base:toWorld(ang(0, -90, -90)))
+		holoMaterial(I, MainMaterial)
+		holoModel(I, "models/hunter/blocks/cube025x025x025.mdl")
+		holoSkin(I, 0)
+		I++
+			holoCreate(I) #platex (5)
+		holoParent(I, Base)
+		holoColor(I, vec(255, 255, 255))
+		holoAlpha(I, 255)
+		holoScale(I, vec(1.05, 1.15, 1.6))
+		holoPos(I, Base:toWorld(vec(7.218, -44.85, 145.6035)))
+		holoAng(I, Base:toWorld(ang(90, -90, 0)))
+		holoMaterial(I, MainMaterial)
+		holoModel(I, "models/hunter/plates/plate025x125.mdl")
+		holoSkin(I, 0)
+		I++
+			holoCreate(I) #platex (6)
+		holoParent(I, Base)
+		holoColor(I, vec(255, 255, 255))
+		holoAlpha(I, 255)
+		holoScale(I, vec(1.8, 0.6, 1))
+		holoPos(I, Base:toWorld(vec(7.9645, -33.071, 115.7363)))
+		holoAng(I, Base:toWorld(ang(37.508, 180, 180)))
+		holoMaterial(I, MainMaterial)
+		holoModel(I, "models/hunter/plates/plate1x1.mdl")
+		holoSkin(I, 0)
+		I++
+			holoCreate(I) #xx (2)
+		holoParent(I, Base)
+		holoColor(I, vec(255, 255, 255))
+		holoAlpha(I, 255)
+		holoScale(I, vec(0.65, 1.05, 1.4))
+		holoPos(I, Base:toWorld(vec(6.4, 34.2, 114.504)))
+		holoAng(I, Base:toWorld(ang(0, -90, -90)))
+		holoMaterial(I, MainMaterial)
+		holoModel(I, "models/hunter/triangles/1x1x1.mdl")
+		holoSkin(I, 0)
+		I++
+			holoCreate(I) #platex (7)
+		holoParent(I, Base)
+		holoColor(I, vec(255, 255, 255))
+		holoAlpha(I, 255)
+		holoScale(I, vec(1.05, 1.15, 1.6))
+		holoPos(I, Base:toWorld(vec(7.218, 44.85, 145.6035)))
+		holoAng(I, Base:toWorld(ang(90, 90, 0)))
+		holoMaterial(I, MainMaterial)
+		holoModel(I, "models/hunter/plates/plate025x125.mdl")
+		holoSkin(I, 0)
+		I++
+			holoCreate(I) #platex (8)
+		holoParent(I, Base)
+		holoColor(I, vec(255, 255, 255))
+		holoAlpha(I, 255)
+		holoScale(I, vec(1.8, 0.6, 1))
+		holoPos(I, Base:toWorld(vec(7.9645, 33.071, 115.7363)))
+		holoAng(I, Base:toWorld(ang(37.508, 180, 180)))
+		holoMaterial(I, MainMaterial)
+		holoModel(I, "models/hunter/plates/plate1x1.mdl")
+		holoSkin(I, 0)
+		I++
+			holoCreate(I) #mount connectiona (2)
+		holoParent(I, Base)
+		holoColor(I, vec(255, 255, 255))
+		holoAlpha(I, 255)
+		holoScale(I, vec(1.8, 1.8, 1.8))
+		holoPos(I, Base:toWorld(vec(0.9, -33.878, 121.7139)))
+		holoAng(I, Base:toWorld(ang(0, 0, 0)))
+		holoMaterial(I, FrameMaterial)
+		holoModel(I, "models/props_trainstation/mount_connection001a.mdl")
+		holoSkin(I, 0)
+		I++
+			holoCreate(I) #platex (9)
+		holoParent(I, Base)
+		holoColor(I, vec(255, 255, 255))
+		holoAlpha(I, 255)
+		holoScale(I, vec(2.1, 0.6, 0.6))
+		holoPos(I, Base:toWorld(vec(43.68, 0.3, 89.709)))
+		holoAng(I, Base:toWorld(ang(90, 0, -0.1)))
+		holoMaterial(I, MainMaterial)
+		holoModel(I, "models/hunter/plates/plate1x1.mdl")
+		holoSkin(I, 0)
+		I++
+			holoCreate(I) #xx (3)
+		holoParent(I, Base)
+		holoColor(I, vec(255, 255, 255))
+		holoAlpha(I, 255)
+		holoScale(I, vec(0.65, 1.05, 1.4))
+		holoPos(I, Base:toWorld(vec(6.4, -34.2, 114.504)))
+		holoAng(I, Base:toWorld(ang(0, -90, -90)))
+		holoMaterial(I, MainMaterial)
+		holoModel(I, "models/hunter/triangles/1x1x1.mdl")
+		holoSkin(I, 0)
+		I++
+			holoCreate(I) #platex (10)
+		holoParent(I, Base)
+		holoColor(I, vec(255, 255, 255))
+		holoAlpha(I, 255)
+		holoScale(I, vec(0.7, 0.6, 1))
+		holoPos(I, Base:toWorld(vec(-42.747, 0, 142.754)))
+		holoAng(I, Base:toWorld(ang(90, 180, 180)))
+		holoMaterial(I, MainMaterial)
+		holoModel(I, "models/hunter/plates/plate1x1.mdl")
+		holoSkin(I, 0)
+		I++
+			holoCreate(I) #cubexx (3)
+		holoParent(I, Base)
+		holoColor(I, vec(255, 255, 255))
+		holoAlpha(I, 255)
+		holoScale(I, vec(0.4, 8.4, 0.5))
+		holoPos(I, Base:toWorld(vec(37.5322, 20.2, 79.104)))
+		holoAng(I, Base:toWorld(ang(0, -90, -90)))
+		holoMaterial(I, MainMaterial)
+		holoModel(I, "models/hunter/blocks/cube025x025x025.mdl")
+		holoSkin(I, 0)
+}
+
+if(changed(clk("4")) && clk("4")){
+
+  local Base = holoEntity(2)
+
+  I++
+		holoCreate(I) #magnetic large base
+		holoParent(I, Base)
+		holoColor(I, vec(255, 255, 255))
+		holoAlpha(I, 255)
+		holoScale(I, vec(1.5, 1.7, 1.5))
+		holoPos(I, Base:toWorld(vec(0, 11, 0)))
+		holoAng(I, Base:toWorld(ang(0, 0, 90)))
+		holoMaterial(I, PartsMaterial)
+		holoModel(I, "models/props_phx/wheels/magnetic_large_base.mdl")
+		holoSkin(I, 0)
+		I++
+			holoCreate(I) #breenlight
+		holoParent(I, Base)
+		holoColor(I, vec(255, 255, 255))
+		holoAlpha(I, 255)
+		holoScale(I, vec(6.9, 6, 3.8))
+		holoPos(I, Base:toWorld(vec(34.2256, 0, -7.5405)))
+		holoAng(I, Base:toWorld(ang(90, 180, 0)))
+		holoMaterial(I, FrameMaterial)
+		holoModel(I, "models/props_combine/breenlight.mdl")
+		holoSkin(I, 0)
+		I++
+			holoCreate(I) #tprotato
+		holoParent(I, Base)
+		holoColor(I, vec(255, 255, 255))
+		holoAlpha(I, 255)
+		holoScale(I, vec(1.1, 0.7, 1))
+		holoPos(I, Base:toWorld(vec(23.1318, 0, -21.4761)))
+		holoAng(I, Base:toWorld(ang(74.6987, 180, 180)))
+		holoMaterial(I, MainMaterial)
+		holoModel(I, "models/props_combine/tprotato2.mdl")
+		holoSkin(I, 0)
+		I++
+			holoCreate(I) #tprotato
+		holoParent(I, Base)
+		holoColor(I, vec(255, 255, 255))
+		holoAlpha(I, 255)
+		holoScale(I, vec(1.1, 0.6, 0.8))
+		holoPos(I, Base:toWorld(vec(23.1318, 0, -28)))
+		holoAng(I, Base:toWorld(ang(74.6987, 180, 180)))
+		holoMaterial(I, FrameMaterial)
+		holoModel(I, "models/props_combine/tprotato2.mdl")
+		holoSkin(I, 0)
+
+  local Base = holoEntity(6)
+
+		I++
+		holoCreate(I) #magnetic large base
+		holoParent(I, Base)
+		holoColor(I, vec(255, 255, 255))
+		holoAlpha(I, 255)
+		holoScale(I, vec(1.5, 1.7, 1.5))
+		holoPos(I, Base:toWorld(vec(0, -11, 0)))
+		holoAng(I, Base:toWorld(ang(0, 0, -90)))
+		holoMaterial(I, PartsMaterial)
+		holoModel(I, "models/props_phx/wheels/magnetic_large_base.mdl")
+		holoSkin(I, 0)
+		I++
+			holoCreate(I) #breenlight
+		holoParent(I, Base)
+		holoColor(I, vec(255, 255, 255))
+		holoAlpha(I, 255)
+		holoScale(I, vec(6.9, 6, 3.8))
+		holoPos(I, Base:toWorld(vec(34.2256, 0, -7.5405)))
+		holoAng(I, Base:toWorld(ang(90, 180, 0)))
+		holoMaterial(I, FrameMaterial)
+		holoModel(I, "models/props_combine/breenlight.mdl")
+		holoSkin(I, 0)
+		I++
+			holoCreate(I) #tprotato
+		holoParent(I, Base)
+		holoColor(I, vec(255, 255, 255))
+		holoAlpha(I, 255)
+		holoScale(I, vec(1.1, 0.7, 1))
+		holoPos(I, Base:toWorld(vec(23.1318, 0, -21.4761)))
+		holoAng(I, Base:toWorld(ang(74.6987, 180, 180)))
+		holoMaterial(I, MainMaterial)
+		holoModel(I, "models/props_combine/tprotato2.mdl")
+		holoSkin(I, 0)
+		I++
+			holoCreate(I) #tprotato
+		holoParent(I, Base)
+		holoColor(I, vec(255, 255, 255))
+		holoAlpha(I, 255)
+		holoScale(I, vec(1.1, 0.6, 0.8))
+		holoPos(I, Base:toWorld(vec(23.1318, 0, -28)))
+		holoAng(I, Base:toWorld(ang(74.6987, 180, 180)))
+		holoMaterial(I, FrameMaterial)
+		holoModel(I, "models/props_combine/tprotato2.mdl")
+		holoSkin(I, 0)
+
+}
+
+if(changed(clk("5")) && clk("5")){
+
+  local Base = holoEntity(3)
+
+		I++
+		holoCreate(I) #magnetic large base
+		holoParent(I, Base)
+		holoColor(I, vec(255, 255, 255))
+		holoAlpha(I, 255)
+		holoScale(I, vec(1.5, 1.5, 1.2))
+		holoPos(I, Base:toWorld(vec(0, -10.928, 0)))
+		holoAng(I, Base:toWorld(ang(0, 0, -90)))
+		holoMaterial(I, PartsMaterial)
+		holoModel(I, "models/props_phx/wheels/magnetic_large_base.mdl")
+		holoSkin(I, 0)
+		I++
+			holoCreate(I) #bomb debris 
+		holoParent(I, Base)
+		holoColor(I, vec(255, 255, 255))
+		holoAlpha(I, 255)
+		holoScale(I, vec(3.5, 1.9, 3.5))
+		holoPos(I, Base:toWorld(vec(44.4785, 0, -18.0432)))
+		holoAng(I, Base:toWorld(ang(0, 0, 0)))
+		holoMaterial(I, MainMaterial)
+		holoModel(I, "models/combine_helicopter/bomb_debris_2.mdl")
+		holoSkin(I, 0)
+		I++
+			holoCreate(I) #magnetic large base (1)
+		holoParent(I, Base)
+		holoColor(I, vec(255, 255, 255))
+		holoAlpha(I, 255)
+		holoScale(I, vec(1.5, 1.5, 1.2))
+		holoPos(I, Base:toWorld(vec(0, 10.9279, 0)))
+		holoAng(I, Base:toWorld(ang(0, 0, 90)))
+		holoMaterial(I, PartsMaterial)
+		holoModel(I, "models/props_phx/wheels/magnetic_large_base.mdl")
+		holoSkin(I, 0)
+		I++
+			holoCreate(I) #breenlight
+		holoParent(I, Base)
+		holoColor(I, vec(255, 255, 255))
+		holoAlpha(I, 255)
+		holoScale(I, vec(5.9, 6.5, 5.3))
+		holoPos(I, Base:toWorld(vec(52.665, 0, -4.2458)))
+		holoAng(I, Base:toWorld(ang(90, 180, 0)))
+		holoMaterial(I, PartsMaterial)
+		holoModel(I, "models/props_combine/breenlight.mdl")
+		holoSkin(I, 0)
+		I++
+			holoCreate(I) #tprotato
+		holoParent(I, Base)
+		holoColor(I, vec(255, 255, 255))
+		holoAlpha(I, 255)
+		holoScale(I, vec(1.3, 0.5, 0.7))
+		holoPos(I, Base:toWorld(vec(53.6514, 0.0002, 24.9685)))
+		holoAng(I, Base:toWorld(ang(-69.738, -179.9994, -0.0004)))
+		holoMaterial(I, FrameMaterial)
+		holoModel(I, "models/props_combine/tprotato1.mdl")
+		holoSkin(I, 0)	
+
+  local Base = holoEntity(7)
+
+		I++
+		holoCreate(I) #magnetic large base
+		holoParent(I, Base)
+		holoColor(I, vec(255, 255, 255))
+		holoAlpha(I, 255)
+		holoScale(I, vec(1.5, 1.5, 1.2))
+		holoPos(I, Base:toWorld(vec(0, -10.928, 0)))
+		holoAng(I, Base:toWorld(ang(0, 0, -90)))
+		holoMaterial(I, PartsMaterial)
+		holoModel(I, "models/props_phx/wheels/magnetic_large_base.mdl")
+		holoSkin(I, 0)
+		I++
+			holoCreate(I) #bomb debris 
+		holoParent(I, Base)
+		holoColor(I, vec(255, 255, 255))
+		holoAlpha(I, 255)
+		holoScale(I, vec(3.5, 1.9, 3.5))
+		holoPos(I, Base:toWorld(vec(44.4785, 0, -18.0432)))
+		holoAng(I, Base:toWorld(ang(0, 0, 0)))
+		holoMaterial(I, MainMaterial)
+		holoModel(I, "models/combine_helicopter/bomb_debris_2.mdl")
+		holoSkin(I, 0)
+		I++
+			holoCreate(I) #magnetic large base (1)
+		holoParent(I, Base)
+		holoColor(I, vec(255, 255, 255))
+		holoAlpha(I, 255)
+		holoScale(I, vec(1.5, 1.5, 1.2))
+		holoPos(I, Base:toWorld(vec(0, 10.9279, 0)))
+		holoAng(I, Base:toWorld(ang(0, 0, 90)))
+		holoMaterial(I, PartsMaterial)
+		holoModel(I, "models/props_phx/wheels/magnetic_large_base.mdl")
+		holoSkin(I, 0)
+		I++
+			holoCreate(I) #breenlight
+		holoParent(I, Base)
+		holoColor(I, vec(255, 255, 255))
+		holoAlpha(I, 255)
+		holoScale(I, vec(5.9, 6.5, 5.3))
+		holoPos(I, Base:toWorld(vec(52.665, 0, -4.2458)))
+		holoAng(I, Base:toWorld(ang(90, 180, 0)))
+		holoMaterial(I, PartsMaterial)
+		holoModel(I, "models/props_combine/breenlight.mdl")
+		holoSkin(I, 0)
+		I++
+			holoCreate(I) #tprotato
+		holoParent(I, Base)
+		holoColor(I, vec(255, 255, 255))
+		holoAlpha(I, 255)
+		holoScale(I, vec(1.3, 0.5, 0.7))
+		holoPos(I, Base:toWorld(vec(53.6514, 0.0002, 24.9685)))
+		holoAng(I, Base:toWorld(ang(-69.738, -179.9994, -0.0004)))
+		holoMaterial(I, FrameMaterial)
+		holoModel(I, "models/props_combine/tprotato1.mdl")
+		holoSkin(I, 0)	
+
+
+}
+
+if(changed(clk("6")) && clk("6")){
+
+  local Base = holoEntity(4)
+
+		I++
+		holoCreate(I) #magnetic large base
+		holoParent(I, Base)
+		holoColor(I, vec(255, 255, 255))
+		holoAlpha(I, 255)
+		holoScale(I, vec(1.4, 1.4, 1.2))
+		holoPos(I, Base:toWorld(vec(15, -10.928, 30)))
+		holoAng(I, Base:toWorld(ang(0, 0, -90)))
+		holoMaterial(I, PartsMaterial)
+		holoModel(I, "models/props_phx/wheels/magnetic_large_base.mdl")
+		holoSkin(I, 0)
+		I++
+			holoCreate(I) #foot s
+		holoParent(I, Base)
+		holoColor(I, vec(255, 255, 255))
+		holoAlpha(I, 255)
+		holoScale(I, vec(1, 1, 1))
+		holoPos(I, Base:toWorld(vec(38.9469+15, -8.6046, -29.5088+30)))
+		holoAng(I, Base:toWorld(ang(0, 0, 0)))
+		holoMaterial(I, PartsMaterial)
+		holoModel(I, "models/mechanics/articulating/foot_s.mdl")
+		holoSkin(I, 0)
+		I++
+			holoCreate(I) #f
+		holoParent(I, Base)
+		holoColor(I, vec(255, 255, 255))
+		holoAlpha(I, 255)
+		holoScale(I, vec(0.44, 0.77, 0.77))
+		holoPos(I, Base:toWorld(vec(-35.3154+15, 0.0019, 30)))
+		holoAng(I, Base:toWorld(ang(0, 90, 0)))
+		holoMaterial(I, PartsMaterial)
+		holoModel(I, "models/mechanics/roboticslarge/f1.mdl")
+		holoSkin(I, 0)
+		I++
+			holoCreate(I) #magnetic large base (1)
+		holoParent(I, Base)
+		holoColor(I, vec(255, 255, 255))
+		holoAlpha(I, 255)
+		holoScale(I, vec(1.4, 1.4, 1.2))
+		holoPos(I, Base:toWorld(vec(15, 10.9279, 30)))
+		holoAng(I, Base:toWorld(ang(0, 0, 90)))
+		holoMaterial(I, PartsMaterial)
+		holoModel(I, "models/props_phx/wheels/magnetic_large_base.mdl")
+		holoSkin(I, 0)
+		I++
+			holoCreate(I) #g
+		holoParent(I, Base)
+		holoColor(I, vec(255, 255, 255))
+		holoAlpha(I, 255)
+		holoScale(I, vec(0.3, 0.5, 0.5))
+		holoPos(I, Base:toWorld(vec(26.4579+15, 0.002, -15.1748+30)))
+		holoAng(I, Base:toWorld(ang(0, -90, -16.489)))
+		holoMaterial(I, PartsMaterial)
+		holoModel(I, "models/mechanics/roboticslarge/g1.mdl")
+		holoSkin(I, 0)
+		I++
+			holoCreate(I) #tprotato
+		holoParent(I, Base)
+		holoColor(I, vec(255, 255, 255))
+		holoAlpha(I, 255)
+		holoScale(I, vec(0.9, 0.2, 0.4))
+		holoPos(I, Base:toWorld(vec(42.351+15, 13.3565, 31.2275)))
+		holoAng(I, Base:toWorld(ang(-47.6959, 0, 0)))
+		holoMaterial(I, MainMaterial)
+		holoModel(I, "models/props_combine/tprotato1.mdl")
+		holoSkin(I, 0)
+		I++
+			holoCreate(I) #tprotato (1)
+		holoParent(I, Base)
+		holoColor(I, vec(255, 255, 255))
+		holoAlpha(I, 255)
+		holoScale(I, vec(1, 0.4, 0.6))
+		holoPos(I, Base:toWorld(vec(12.7964+15, 0, -2.3643+30)))
+		holoAng(I, Base:toWorld(ang(-76.0977, 0, 0)))
+		holoMaterial(I, FrameMaterial)
+		holoModel(I, "models/props_combine/tprotato1.mdl")
+		holoSkin(I, 0)
+		I++
+			holoCreate(I) #foot
+		holoParent(I, Base)
+		holoColor(I, vec(255, 255, 255))
+		holoAlpha(I, 255)
+		holoScale(I, vec(1, 1, 1))
+		holoPos(I, Base:toWorld(vec(-16.6196+15, 16.394, -11.166+30)))
+		holoAng(I, Base:toWorld(ang(0, 0, 0)))
+		holoMaterial(I, PartsMaterial)
+		holoModel(I, "models/mechanics/robotics/foot.mdl")
+		holoSkin(I, 0)
+		I++
+			holoCreate(I) #bomb debris 
+		holoParent(I, Base)
+		holoColor(I, vec(255, 255, 255))
+		holoAlpha(I, 255)
+		holoScale(I, vec(1.4, 1.7, 2.1))
+		holoPos(I, Base:toWorld(vec(-12.0548+15, 0.0006, -1.0322+30)))
+		holoAng(I, Base:toWorld(ang(83.5788, -0.0474, -0.0477)))
+		holoMaterial(I, PartsMaterial)
+		holoModel(I, "models/combine_helicopter/bomb_debris_2.mdl")
+		holoSkin(I, 0)
+		I++
+			holoCreate(I) #foot s (1)
+		holoParent(I, Base)
+		holoColor(I, vec(255, 255, 255))
+		holoAlpha(I, 255)
+		holoScale(I, vec(1, 1, 1))
+		holoPos(I, Base:toWorld(vec(38.9469+15, 8.605, -29.5088+30)))
+		holoAng(I, Base:toWorld(ang(0, 0, 0)))
+		holoMaterial(I, PartsMaterial)
+		holoModel(I, "models/mechanics/articulating/foot_s.mdl")
+		holoSkin(I, 0)
+		I++
+			holoCreate(I) #bomb debris (1)
+		holoParent(I, Base)
+		holoColor(I, vec(255, 255, 255))
+		holoAlpha(I, 255)
+		holoScale(I, vec(1.4, 1.8, 2.1))
+		holoPos(I, Base:toWorld(vec(12.3504+15, 0, -9.752+30)))
+		holoAng(I, Base:toWorld(ang(-49.1188, 0, -0.0082)))
+		holoMaterial(I, PartsMaterial)
+		holoModel(I, "models/combine_helicopter/bomb_debris_2.mdl")
+		holoSkin(I, 0)
+		I++
+			holoCreate(I) #foot (1)
+		holoParent(I, Base)
+		holoColor(I, vec(255, 255, 255))
+		holoAlpha(I, 255)
+		holoScale(I, vec(1, 1, 1))
+		holoPos(I, Base:toWorld(vec(-16.6196+15, -16.394, -11.166+30)))
+		holoAng(I, Base:toWorld(ang(0, 0, 0)))
+		holoMaterial(I, PartsMaterial)
+		holoModel(I, "models/mechanics/robotics/foot.mdl")
+		holoSkin(I, 0)
+		I++
+			holoCreate(I) #f (1)
+		holoParent(I, Base)
+		holoColor(I, vec(255, 255, 255))
+		holoAlpha(I, 255)
+		holoScale(I, vec(0.35, 0.7, 0.5))
+		holoPos(I, Base:toWorld(vec(26.4579+15, 0.002, -15.175+30)))
+		holoAng(I, Base:toWorld(ang(0, -90, -16.489)))
+		holoMaterial(I, PartsMaterial)
+		holoModel(I, "models/mechanics/robotics/f1.mdl")
+		holoSkin(I, 0)
+		I++
+			holoCreate(I) #tprotato (2)
+		holoParent(I, Base)
+		holoColor(I, vec(255, 255, 255))
+		holoAlpha(I, 255)
+		holoScale(I, vec(0.9, 0.2, 0.4))
+		holoPos(I, Base:toWorld(vec(42.351+15, -13.357, 31.2275)))
+		holoAng(I, Base:toWorld(ang(-47.6959, 0, 0)))
+		holoMaterial(I, MainMaterial)
+		holoModel(I, "models/props_combine/tprotato1.mdl")
+		holoSkin(I, 0)
+
+}
+
+if(changed(clk("7")) && clk("7")){
+
+  local Base = holoEntity(8)
+
+		I++
+		holoCreate(I) #magnetic large base
+		holoParent(I, Base)
+		holoColor(I, vec(255, 255, 255))
+		holoAlpha(I, 255)
+		holoScale(I, vec(1.4, 1.4, 1.2))
+		holoPos(I, Base:toWorld(vec(15, -10.928, 30)))
+		holoAng(I, Base:toWorld(ang(0, 0, -90)))
+		holoMaterial(I, PartsMaterial)
+		holoModel(I, "models/props_phx/wheels/magnetic_large_base.mdl")
+		holoSkin(I, 0)
+		I++
+			holoCreate(I) #foot s
+		holoParent(I, Base)
+		holoColor(I, vec(255, 255, 255))
+		holoAlpha(I, 255)
+		holoScale(I, vec(1, 1, 1))
+		holoPos(I, Base:toWorld(vec(38.9469+15, -8.6046, -29.5088+30)))
+		holoAng(I, Base:toWorld(ang(0, 0, 0)))
+		holoMaterial(I, PartsMaterial)
+		holoModel(I, "models/mechanics/articulating/foot_s.mdl")
+		holoSkin(I, 0)
+		I++
+			holoCreate(I) #f
+		holoParent(I, Base)
+		holoColor(I, vec(255, 255, 255))
+		holoAlpha(I, 255)
+		holoScale(I, vec(0.44, 0.77, 0.77))
+		holoPos(I, Base:toWorld(vec(-35.3154+15, 0.0019, 30)))
+		holoAng(I, Base:toWorld(ang(0, 90, 0)))
+		holoMaterial(I, PartsMaterial)
+		holoModel(I, "models/mechanics/roboticslarge/f1.mdl")
+		holoSkin(I, 0)
+		I++
+			holoCreate(I) #magnetic large base (1)
+		holoParent(I, Base)
+		holoColor(I, vec(255, 255, 255))
+		holoAlpha(I, 255)
+		holoScale(I, vec(1.4, 1.4, 1.2))
+		holoPos(I, Base:toWorld(vec(15, 10.9279, 30)))
+		holoAng(I, Base:toWorld(ang(0, 0, 90)))
+		holoMaterial(I, PartsMaterial)
+		holoModel(I, "models/props_phx/wheels/magnetic_large_base.mdl")
+		holoSkin(I, 0)
+		I++
+			holoCreate(I) #g
+		holoParent(I, Base)
+		holoColor(I, vec(255, 255, 255))
+		holoAlpha(I, 255)
+		holoScale(I, vec(0.3, 0.5, 0.5))
+		holoPos(I, Base:toWorld(vec(26.4579+15, 0.002, -15.1748+30)))
+		holoAng(I, Base:toWorld(ang(0, -90, -16.489)))
+		holoMaterial(I, PartsMaterial)
+		holoModel(I, "models/mechanics/roboticslarge/g1.mdl")
+		holoSkin(I, 0)
+		I++
+			holoCreate(I) #tprotato
+		holoParent(I, Base)
+		holoColor(I, vec(255, 255, 255))
+		holoAlpha(I, 255)
+		holoScale(I, vec(0.9, 0.2, 0.4))
+		holoPos(I, Base:toWorld(vec(42.351+15, 13.3565, 31.2275)))
+		holoAng(I, Base:toWorld(ang(-47.6959, 0, 0)))
+		holoMaterial(I, MainMaterial)
+		holoModel(I, "models/props_combine/tprotato1.mdl")
+		holoSkin(I, 0)
+		I++
+			holoCreate(I) #tprotato (1)
+		holoParent(I, Base)
+		holoColor(I, vec(255, 255, 255))
+		holoAlpha(I, 255)
+		holoScale(I, vec(1, 0.4, 0.6))
+		holoPos(I, Base:toWorld(vec(12.7964+15, 0, -2.3643+30)))
+		holoAng(I, Base:toWorld(ang(-76.0977, 0, 0)))
+		holoMaterial(I, FrameMaterial)
+		holoModel(I, "models/props_combine/tprotato1.mdl")
+		holoSkin(I, 0)
+		I++
+			holoCreate(I) #foot
+		holoParent(I, Base)
+		holoColor(I, vec(255, 255, 255))
+		holoAlpha(I, 255)
+		holoScale(I, vec(1, 1, 1))
+		holoPos(I, Base:toWorld(vec(-16.6196+15, 16.394, -11.166+30)))
+		holoAng(I, Base:toWorld(ang(0, 0, 0)))
+		holoMaterial(I, PartsMaterial)
+		holoModel(I, "models/mechanics/robotics/foot.mdl")
+		holoSkin(I, 0)
+		I++
+			holoCreate(I) #bomb debris 
+		holoParent(I, Base)
+		holoColor(I, vec(255, 255, 255))
+		holoAlpha(I, 255)
+		holoScale(I, vec(1.4, 1.7, 2.1))
+		holoPos(I, Base:toWorld(vec(-12.0548+15, 0.0006, -1.0322+30)))
+		holoAng(I, Base:toWorld(ang(83.5788, -0.0474, -0.0477)))
+		holoMaterial(I, PartsMaterial)
+		holoModel(I, "models/combine_helicopter/bomb_debris_2.mdl")
+		holoSkin(I, 0)
+		I++
+			holoCreate(I) #foot s (1)
+		holoParent(I, Base)
+		holoColor(I, vec(255, 255, 255))
+		holoAlpha(I, 255)
+		holoScale(I, vec(1, 1, 1))
+		holoPos(I, Base:toWorld(vec(38.9469+15, 8.605, -29.5088+30)))
+		holoAng(I, Base:toWorld(ang(0, 0, 0)))
+		holoMaterial(I, PartsMaterial)
+		holoModel(I, "models/mechanics/articulating/foot_s.mdl")
+		holoSkin(I, 0)
+		I++
+			holoCreate(I) #bomb debris (1)
+		holoParent(I, Base)
+		holoColor(I, vec(255, 255, 255))
+		holoAlpha(I, 255)
+		holoScale(I, vec(1.4, 1.8, 2.1))
+		holoPos(I, Base:toWorld(vec(12.3504+15, 0, -9.752+30)))
+		holoAng(I, Base:toWorld(ang(-49.1188, 0, -0.0082)))
+		holoMaterial(I, PartsMaterial)
+		holoModel(I, "models/combine_helicopter/bomb_debris_2.mdl")
+		holoSkin(I, 0)
+		I++
+			holoCreate(I) #foot (1)
+		holoParent(I, Base)
+		holoColor(I, vec(255, 255, 255))
+		holoAlpha(I, 255)
+		holoScale(I, vec(1, 1, 1))
+		holoPos(I, Base:toWorld(vec(-16.6196+15, -16.394, -11.166+30)))
+		holoAng(I, Base:toWorld(ang(0, 0, 0)))
+		holoMaterial(I, PartsMaterial)
+		holoModel(I, "models/mechanics/robotics/foot.mdl")
+		holoSkin(I, 0)
+		I++
+			holoCreate(I) #f (1)
+		holoParent(I, Base)
+		holoColor(I, vec(255, 255, 255))
+		holoAlpha(I, 255)
+		holoScale(I, vec(0.35, 0.7, 0.5))
+		holoPos(I, Base:toWorld(vec(26.4579+15, 0.002, -15.175+30)))
+		holoAng(I, Base:toWorld(ang(0, -90, -16.489)))
+		holoMaterial(I, PartsMaterial)
+		holoModel(I, "models/mechanics/robotics/f1.mdl")
+		holoSkin(I, 0)
+		I++
+			holoCreate(I) #tprotato (2)
+		holoParent(I, Base)
+		holoColor(I, vec(255, 255, 255))
+		holoAlpha(I, 255)
+		holoScale(I, vec(0.9, 0.2, 0.4))
+		holoPos(I, Base:toWorld(vec(42.351+15, -13.357, 31.2275)))
+		holoAng(I, Base:toWorld(ang(-47.6959, 0, 0)))
+		holoMaterial(I, MainMaterial)
+		holoModel(I, "models/props_combine/tprotato1.mdl")
+		holoSkin(I, 0)
+
+}
+
+if(changed(clk("8")) && clk("8")){
+
+  local Base = E
+
+		I++
+		holoCreate(I) #hq cubinder
+		holoParent(I, Base)
+		holoColor(I, vec(255, 255, 255))
+		holoAlpha(I, 255)
+		holoScale(I, vec(3.8, 3.8, 2.5))
+		holoPos(I, Base:toWorld(vec(0, 0, 16.406)))
+		holoAng(I, Base:toWorld(ang(0, 0, 0)))
+		holoMaterial(I, MainMaterial)
+		holoModel(I, "models/holograms/hq_cubinder.mdl")
+		holoSkin(I, 0)
+
+		I++
+			holoCreate(I) #trieqxxsolid
+		holoParent(I, Base)
+		holoColor(I, vec(255, 255, 255))
+		holoAlpha(I, 255)
+		holoScale(I, vec(0.6, 0.8, 0.7))
+		holoPos(I, Base:toWorld(vec(0, 0, 0)))
+		holoAng(I, Base:toWorld(ang(-90, -180, 0)))
+		holoMaterial(I, FrameMaterial)
+		holoModel(I, "models/phxtended/trieq1x1x2solid.mdl")
+		holoSkin(I, 0)
+		I++
+			holoCreate(I) #trieqxxsolid (1)
+		holoParent(I, Base)
+		holoColor(I, vec(255, 255, 255))
+		holoAlpha(I, 255)
+		holoScale(I, vec(0.8, 0.6, 0.7))
+		holoPos(I, Base:toWorld(vec(0, 0, 0)))
+		holoAng(I, Base:toWorld(ang(0, -90, -90)))
+		holoMaterial(I, FrameMaterial)
+		holoModel(I, "models/phxtended/trieq1x1x2solid.mdl")
+		holoSkin(I, 0)
+		I++
+			holoCreate(I) #trieqxxsolid (2)
+		holoParent(I, Base)
+		holoColor(I, vec(255, 255, 255))
+		holoAlpha(I, 255)
+		holoScale(I, vec(0.8, 0.6, 0.5))
+		holoPos(I, Base:toWorld(vec(0, 0, 0)))
+		holoAng(I, Base:toWorld(ang(0, -90, 90)))
+		holoMaterial(I, FrameMaterial)
+		holoModel(I, "models/phxtended/trieq1x1x2solid.mdl")
+		holoSkin(I, 0)
+		I++
+			holoCreate(I) #hq cone
+		holoParent(I, Base)
+		holoColor(I, vec(255, 255, 255))
+		holoAlpha(I, 255)
+		holoScale(I, vec(1.7, 1.7, 1.7))
+		holoPos(I, Base:toWorld(vec(0, 58.818, 0)))
+		holoAng(I, Base:toWorld(ang(0, 0, -90)))
+		holoMaterial(I, PartsMaterial)
+		holoModel(I, "models/holograms/hq_cone.mdl")
+		holoSkin(I, 0)
+		I++
+			holoCreate(I) #trieqxxsolid (3)
+		holoParent(I, Base)
+		holoColor(I, vec(255, 255, 255))
+		holoAlpha(I, 255)
+		holoScale(I, vec(0.8, 0.6, 0.5))
+		holoPos(I, Base:toWorld(vec(0, 0, 0)))
+		holoAng(I, Base:toWorld(ang(-0.0001, 90, -90)))
+		holoMaterial(I, FrameMaterial)
+		holoModel(I, "models/phxtended/trieq1x1x2solid.mdl")
+		holoSkin(I, 0)
+		I++
+			holoCreate(I) #hq cone (1)
+		holoParent(I, Base)
+		holoColor(I, vec(255, 255, 255))
+		holoAlpha(I, 255)
+		holoScale(I, vec(1.7, 1.7, 1.7))
+		holoPos(I, Base:toWorld(vec(0, -58.8184, 0)))
+		holoAng(I, Base:toWorld(ang(0, 0, 90)))
+		holoMaterial(I, PartsMaterial)
+		holoModel(I, "models/holograms/hq_cone.mdl")
+		holoSkin(I, 0)
+		I++
+			holoCreate(I) #hq cubinder (1)
+		holoParent(I, Base)
+		holoColor(I, vec(255, 255, 255))
+		holoAlpha(I, 255)
+		holoScale(I, vec(1.7, 1.7, 2.1))
+		holoPos(I, Base:toWorld(vec(0, 36.075, 0)))
+		holoAng(I, Base:toWorld(ang(0, 0, -90)))
+		holoMaterial(I, PartsMaterial)
+		holoModel(I, "models/holograms/hq_cubinder.mdl")
+		holoSkin(I, 0)
+		I++
+			holoCreate(I) #trieqxxsolid (4)
+		holoParent(I, Base)
+		holoColor(I, vec(255, 255, 255))
+		holoAlpha(I, 255)
+		holoScale(I, vec(0.8, 0.6, 0.7))
+		holoPos(I, Base:toWorld(vec(0, 0, 0)))
+		holoAng(I, Base:toWorld(ang(0, 90, 90)))
+		holoMaterial(I, FrameMaterial)
+		holoModel(I, "models/phxtended/trieq1x1x2solid.mdl")
+		holoSkin(I, 0)
+		I++
+			holoCreate(I) #trieqxxsolid (5)
+		holoParent(I, Base)
+		holoColor(I, vec(255, 255, 255))
+		holoAlpha(I, 255)
+		holoScale(I, vec(0.6, 0.8, 0.5))
+		holoPos(I, Base:toWorld(vec(0, 0, 0)))
+		holoAng(I, Base:toWorld(ang(-90, -90, 90)))
+		holoMaterial(I, FrameMaterial)
+		holoModel(I, "models/phxtended/trieq1x1x2solid.mdl")
+		holoSkin(I, 0)
+		I++
+			holoCreate(I) #trieqxxsolid (6)
+		holoParent(I, Base)
+		holoColor(I, vec(255, 255, 255))
+		holoAlpha(I, 255)
+		holoScale(I, vec(0.6, 0.8, 0.5))
+		holoPos(I, Base:toWorld(vec(0, 0, 0)))
+		holoAng(I, Base:toWorld(ang(90, 180, 0)))
+		holoMaterial(I, FrameMaterial)
+		holoModel(I, "models/phxtended/trieq1x1x2solid.mdl")
+		holoSkin(I, 0)
+		I++
+			holoCreate(I) #trieqxxsolid (7)
+		holoParent(I, Base)
+		holoColor(I, vec(255, 255, 255))
+		holoAlpha(I, 255)
+		holoScale(I, vec(0.6, 0.8, 0.7))
+		holoPos(I, Base:toWorld(vec(0, 0, 0)))
+		holoAng(I, Base:toWorld(ang(90, -90, -90)))
+		holoMaterial(I, FrameMaterial)
+		holoModel(I, "models/phxtended/trieq1x1x2solid.mdl")
+		holoSkin(I, 0)
+		I++
+			holoCreate(I) #hq cubinder (2)
+		holoParent(I, Base)
+		holoColor(I, vec(255, 255, 255))
+		holoAlpha(I, 255)
+		holoScale(I, vec(1.7, 1.7, 2.1))
+		holoPos(I, Base:toWorld(vec(0, -36.075, 0)))
+		holoAng(I, Base:toWorld(ang(0, 0, 90)))
+		holoMaterial(I, PartsMaterial)
+		holoModel(I, "models/holograms/hq_cubinder.mdl")
+		holoSkin(I, 0)
+
+}
+
+if(changed(clk("9")) && clk("9")){
+
+  local Base = holoEntity(0)
+
+  I++
+	 	holoCreate(I) #mount connectiona
+		holoParent(I, Base)
+		holoColor(I, vec(255, 255, 255))
+		holoAlpha(I, 255)
+		holoScale(I, vec(1.6, 1, 1))
+		holoPos(I, Base:toWorld(vec(-2.9757, 0, 49.5479)))
+		holoAng(I, Base:toWorld(ang(-85.468, -180, 179.9999)))
+		holoMaterial(I, PartsMaterial)
+		holoModel(I, "models/props_trainstation/mount_connection001a.mdl")
+		holoSkin(I, 0)
+		I++
+			holoCreate(I) #trainstation post
+		holoParent(I, Base)
+		holoColor(I, vec(255, 255, 255))
+		holoAlpha(I, 255)
+		holoScale(I, vec(1, 1, 1))
+		holoPos(I, Base:toWorld(vec(9.4134, 15.71, -2.2676)))
+		holoAng(I, Base:toWorld(ang(13.215, 0, -2.5)))
+		holoMaterial(I, PartsMaterial)
+		holoModel(I, "models/props_trainstation/trainstation_post001.mdl")
+		holoSkin(I, 0)
+		I++
+			holoCreate(I) #breenlight
+		holoParent(I, Base)
+		holoColor(I, vec(255, 255, 255))
+		holoAlpha(I, 255)
+		holoScale(I, vec(3, 4.2, 1.1))
+		holoPos(I, Base:toWorld(vec(-40.5528, -32.7263, 84.873)))
+		holoAng(I, Base:toWorld(ang(29.0214, -179.9999, 0.0001)))
+		holoMaterial(I, FrameMaterial)
+		holoModel(I, "models/props_combine/breenlight.mdl")
+		holoSkin(I, 0)
+		I++
+			holoCreate(I) #trainstation post (1)
+		holoParent(I, Base)
+		holoColor(I, vec(255, 255, 255))
+		holoAlpha(I, 255)
+		holoScale(I, vec(1, 1, 1))
+		holoPos(I, Base:toWorld(vec(9.4134, -15.71, -2.2676)))
+		holoAng(I, Base:toWorld(ang(13.215, 0, -2.5)))
+		holoMaterial(I, PartsMaterial)
+		holoModel(I, "models/props_trainstation/trainstation_post001.mdl")
+		holoSkin(I, 0)
+		I++
+			holoCreate(I) #light spotlight lamp
+		holoParent(I, Base)
+		holoColor(I, vec(255, 255, 255))
+		holoAlpha(I, 255)
+		holoScale(I, vec(2, 1, 1))
+		holoPos(I, Base:toWorld(vec(3.9903, 0, 35.0654)))
+		holoAng(I, Base:toWorld(ang(0, 0, 0)))
+		holoMaterial(I, PartsMaterial)
+		holoModel(I, "models/props_wasteland/light_spotlight01_lamp.mdl")
+		holoSkin(I, 0)
+		I++
+			holoCreate(I) #breenlight (1)
+		holoParent(I, Base)
+		holoColor(I, vec(255, 255, 255))
+		holoAlpha(I, 255)
+		holoScale(I, vec(3, 4.2, 1.1))
+		holoPos(I, Base:toWorld(vec(-40.5528, 32.726, 84.873)))
+		holoAng(I, Base:toWorld(ang(29.0214, -179.9999, 0.0001)))
+		holoMaterial(I, FrameMaterial)
+		holoModel(I, "models/props_combine/breenlight.mdl")
+		holoSkin(I, 0)
+		I++
+			holoCreate(I) #trainstation post (2)
+		holoParent(I, Base)
+		holoColor(I, vec(255, 255, 255))
+		holoAlpha(I, 255)
+		holoScale(I, vec(1.8, 1.8, 1.8))
+		holoPos(I, Base:toWorld(vec(0, -18.89, 0)))
+		holoAng(I, Base:toWorld(ang(-25.736, 19.2, 0)))
+		holoMaterial(I, PartsMaterial)
+		holoModel(I, "models/props_trainstation/trainstation_post001.mdl")
+		holoSkin(I, 0)
+		I++
+			holoCreate(I) #trainstation post (3)
+		holoParent(I, Base)
+		holoColor(I, vec(255, 255, 255))
+		holoAlpha(I, 255)
+		holoScale(I, vec(1.8, 1.8, 1.8))
+		holoPos(I, Base:toWorld(vec(0, 18.8901, 0)))
+		holoAng(I, Base:toWorld(ang(-25.736, -19.2, 0)))
+		holoMaterial(I, PartsMaterial)
+		holoModel(I, "models/props_trainstation/trainstation_post001.mdl")
+		holoSkin(I, 0)
+		I++
+			holoCreate(I) #trashbina
+		holoParent(I, Base)
+		holoColor(I, vec(255, 255, 255))
+		holoAlpha(I, 255)
+		holoScale(I, vec(1, 1, 1))
+		holoPos(I, Base:toWorld(vec(0, 0, 15.6621)))
+		holoAng(I, Base:toWorld(ang(0, -180, 0)))
+		holoMaterial(I, MainMaterial)
+		holoModel(I, "models/props_junk/TrashBin01a.mdl")
+		holoSkin(I, 0)
+
+}
+
+if(changed(clk("10")) && clk("10")){
+     
+local Base = TorsoBase    
+	I++
+		holoCreate(I) #mount connectiona
+		holoParent(I, Base)
+		holoColor(I, vec(255, 255, 255))
+		holoAlpha(I, 255)
+		holoScale(I, vec(1.8, 1.8, 1.7))
+		holoPos(I, Base:toWorld(vec(0.99, -85.67, 116.555)))
+		holoAng(I, Base:toWorld(ang(0, 0, 0)))
+		holoMaterial(I, FrameMaterial)
+		holoModel(I, "models/props_trainstation/mount_connection001a.mdl")
+
+  Base = holoEntity(I) 
+	I++
+			holoCreate(I) #x
+		holoParent(I, Base)
+		holoColor(I, vec(255, 255, 255))
+		holoAlpha(I, 255)
+		holoScale(I, vec(1, 1.32, 10.6))
+		holoPos(I, Base:toWorld(vec(3.9, 0, -6.3)))
+		holoAng(I, Base:toWorld(ang(-90, -0.0001, -90)))
+		holoMaterial(I, MainMaterial)
+		holoModel(I, "models/hunter/triangles/1x1.mdl")
+
+		I++
+			holoCreate(I) #platex
+		holoParent(I, Base)
+		holoColor(I, vec(255, 255, 255))
+		holoAlpha(I, 255)
+		holoScale(I, vec(1.05, 1.55, 10.6))
+		holoPos(I, Base:toWorld(vec(2.2, 0, 23.655)))
+		holoAng(I, Base:toWorld(ang(-90, -0.0001, -90)))
+		holoMaterial(I, MainMaterial)
+		holoModel(I, "models/hunter/plates/plate025x1.mdl")
+
+		I++
+			holoCreate(I) #platex (1)
+		holoParent(I, Base)
+		holoColor(I, vec(255, 255, 255))
+		holoAlpha(I, 255)
+		holoScale(I, vec(0.605, 1, 10.6))
+		holoPos(I, Base:toWorld(vec(-30.98, 0, -6.3)))
+		holoAng(I, Base:toWorld(ang(0, -179.9997, 90)))
+		holoMaterial(I, MainMaterial)
+		holoModel(I, "models/hunter/plates/plate025x1.mdl")
+
+local Base = TorsoBase
+I++
+		holoCreate(I) #mount connectiona (1)
+		holoParent(I, Base)
+		holoColor(I, vec(255, 255, 255))
+		holoAlpha(I, 255)
+		holoScale(I, vec(1.8, 1.8, 1.7))
+		holoPos(I, Base:toWorld(vec(1, -59.701, 120.08)))
+		holoAng(I, Base:toWorld(ang(0, 0, 15)))
+		holoMaterial(I, FrameMaterial)
+		holoModel(I, "models/props_trainstation/mount_connection001a.mdl")
+
+  Base = holoEntity(I) 
+	I++
+			holoCreate(I) #x
+		holoParent(I, Base)
+		holoColor(I, vec(255, 255, 255))
+		holoAlpha(I, 255)
+		holoScale(I, vec(1, 1.32, 10.6))
+		holoPos(I, Base:toWorld(vec(3.9, 0, -6.3)))
+		holoAng(I, Base:toWorld(ang(-90, -0.0001, -90)))
+		holoMaterial(I, MainMaterial)
+		holoModel(I, "models/hunter/triangles/1x1.mdl")
+
+		I++
+			holoCreate(I) #platex
+		holoParent(I, Base)
+		holoColor(I, vec(255, 255, 255))
+		holoAlpha(I, 255)
+		holoScale(I, vec(1.05, 1.55, 10.6))
+		holoPos(I, Base:toWorld(vec(2.2, 0, 23.655)))
+		holoAng(I, Base:toWorld(ang(-90, -0.0001, -90)))
+		holoMaterial(I, MainMaterial)
+		holoModel(I, "models/hunter/plates/plate025x1.mdl")
+
+		I++
+			holoCreate(I) #platex (1)
+		holoParent(I, Base)
+		holoColor(I, vec(255, 255, 255))
+		holoAlpha(I, 255)
+		holoScale(I, vec(0.605, 1, 10.6))
+		holoPos(I, Base:toWorld(vec(-30.98, 0, -6.3)))
+		holoAng(I, Base:toWorld(ang(0, -179.9997, 90)))
+		holoMaterial(I, MainMaterial)
+		holoModel(I, "models/hunter/plates/plate025x1.mdl")
+
+local Base = TorsoBase
+I++
+		holoCreate(I) #mount connectiona (2)
+		holoParent(I, Base)
+		holoColor(I, vec(255, 255, 255))
+		holoAlpha(I, 255)
+		holoScale(I, vec(1.8, 1.8, 1.7))
+		holoPos(I, Base:toWorld(vec(1, 59.701, 120.08)))
+		holoAng(I, Base:toWorld(ang(0, 0, -15)))
+		holoMaterial(I, FrameMaterial)
+		holoModel(I, "models/props_trainstation/mount_connection001a.mdl")
+
+  Base = holoEntity(I) 
+	I++
+			holoCreate(I) #x
+		holoParent(I, Base)
+		holoColor(I, vec(255, 255, 255))
+		holoAlpha(I, 255)
+		holoScale(I, vec(1, 1.32, 10.6))
+		holoPos(I, Base:toWorld(vec(3.9, 0, -6.3)))
+		holoAng(I, Base:toWorld(ang(-90, -0.0001, -90)))
+		holoMaterial(I, MainMaterial)
+		holoModel(I, "models/hunter/triangles/1x1.mdl")
+
+		I++
+			holoCreate(I) #platex
+		holoParent(I, Base)
+		holoColor(I, vec(255, 255, 255))
+		holoAlpha(I, 255)
+		holoScale(I, vec(1.05, 1.55, 10.6))
+		holoPos(I, Base:toWorld(vec(2.2, 0, 23.655)))
+		holoAng(I, Base:toWorld(ang(-90, -0.0001, -90)))
+		holoMaterial(I, MainMaterial)
+		holoModel(I, "models/hunter/plates/plate025x1.mdl")
+
+		I++
+			holoCreate(I) #platex (1)
+		holoParent(I, Base)
+		holoColor(I, vec(255, 255, 255))
+		holoAlpha(I, 255)
+		holoScale(I, vec(0.605, 1, 10.6))
+		holoPos(I, Base:toWorld(vec(-30.98, 0, -6.3)))
+		holoAng(I, Base:toWorld(ang(0, -179.9997, 90)))
+		holoMaterial(I, MainMaterial)
+		holoModel(I, "models/hunter/plates/plate025x1.mdl")
+
+local Base = TorsoBase
+I++
+		holoCreate(I) #mount connectiona (3)
+		holoParent(I, Base)
+		holoColor(I, vec(255, 255, 255))
+		holoAlpha(I, 255)
+		holoScale(I, vec(1.8, 1.8, 1.7))
+		holoPos(I, Base:toWorld(vec(0.99, 85.67, 116.555)))
+		holoAng(I, Base:toWorld(ang(0, 0, 0)))
+		holoMaterial(I, FrameMaterial)
+		holoModel(I, "models/props_trainstation/mount_connection001a.mdl")
+
+  Base = holoEntity(I) 
+	I++
+			holoCreate(I) #x
+		holoParent(I, Base)
+		holoColor(I, vec(255, 255, 255))
+		holoAlpha(I, 255)
+		holoScale(I, vec(1, 1.32, 10.6))
+		holoPos(I, Base:toWorld(vec(3.9, 0, -6.3)))
+		holoAng(I, Base:toWorld(ang(-90, -0.0001, -90)))
+		holoMaterial(I, MainMaterial)
+		holoModel(I, "models/hunter/triangles/1x1.mdl")
+
+		I++
+			holoCreate(I) #platex
+		holoParent(I, Base)
+		holoColor(I, vec(255, 255, 255))
+		holoAlpha(I, 255)
+		holoScale(I, vec(1.05, 1.55, 10.6))
+		holoPos(I, Base:toWorld(vec(2.2, 0, 23.655)))
+		holoAng(I, Base:toWorld(ang(-90, -0.0001, -90)))
+		holoMaterial(I, MainMaterial)
+		holoModel(I, "models/hunter/plates/plate025x1.mdl")
+
+		I++
+			holoCreate(I) #platex (1)
+		holoParent(I, Base)
+		holoColor(I, vec(255, 255, 255))
+		holoAlpha(I, 255)
+		holoScale(I, vec(0.605, 1, 10.6))
+		holoPos(I, Base:toWorld(vec(-30.98, 0, -6.3)))
+		holoAng(I, Base:toWorld(ang(0, -179.9997, 90)))
+		holoMaterial(I, MainMaterial)
+		holoModel(I, "models/hunter/plates/plate025x1.mdl")
+
+}
+
+if(changed(clk("11")) && clk("11")){
+     
+local Base = TorsoBase  
+
+  I++
+		holoCreate(I) #right prism
+		holoParent(I, Base)
+		holoColor(I, vec(255, 255, 255))
+		holoAlpha(I, 255)
+		holoScale(I, vec(7.67, 0.39, 8.32))
+		holoPos(I, Base:toWorld(vec(10.856, 53.58, 90.5)))
+		holoAng(I, Base:toWorld(ang(0, 135, 180)))
+		holoMaterial(I, FrameMaterial)
+		holoModel(I, "models/holograms/right_prism.mdl")
+		holoSkin(I, 0)
+		I++
+			holoCreate(I) #combine apc wheelcollision
+		holoParent(I, Base)
+		holoColor(I, vec(255, 255, 255))
+		holoAlpha(I, 255)
+		holoScale(I, vec(0.5, 0.4, 0.5))
+		holoPos(I, Base:toWorld(vec(0, 0, 126.9023)))
+		holoAng(I, Base:toWorld(ang(0, -90, 0)))
+		holoMaterial(I, MainMaterial)
+		holoModel(I, "models/combine_apc_wheelcollision.mdl")
+		holoSkin(I, 0)
+		I++
+			holoCreate(I) #signpole
+		holoParent(I, Base)
+		holoColor(I, vec(255, 255, 255))
+		holoAlpha(I, 255)
+		holoScale(I, vec(1, 1, 1))
+		holoPos(I, Base:toWorld(vec(-42.3047, -51.3321, 149.6973)))
+		holoAng(I, Base:toWorld(ang(0, 0, 0)))
+		holoMaterial(I, PartsMaterial)
+		holoModel(I, "models/props_c17/signpole001.mdl")
+		holoSkin(I, 0)
+		I++
+			holoCreate(I) #right prism (1)
+		holoParent(I, Base)
+		holoColor(I, vec(255, 255, 255))
+		holoAlpha(I, 255)
+		holoScale(I, vec(7.67, 0.39, 8.32))
+		holoPos(I, Base:toWorld(vec(10.856, -54.58, 90.5)))
+		holoAng(I, Base:toWorld(ang(0, -135, 180)))
+		holoMaterial(I, FrameMaterial)
+		holoModel(I, "models/holograms/right_prism.mdl")
+		holoSkin(I, 0)
+		I++
+		holoCreate(I) #magnetic large base
+		holoParent(I, Base)
+		holoColor(I, vec(255, 255, 255))
+		holoAlpha(I, 255)
+		holoScale(I, vec(1.2, 1.2, 2.3))
+		holoPos(I, Base:toWorld(vec(-18.952, 124.412, 123.66)))
+		holoAng(I, Base:toWorld(ang(0, 0, 0)))
+		holoMaterial(I, PartsMaterial)
+		holoModel(I, "models/props_phx/wheels/magnetic_large_base.mdl")
+		holoSkin(I, 0) 
+		I++
+			holoCreate(I) #g
+		holoParent(I, Base)
+		holoColor(I, vec(255, 255, 255))
+		holoAlpha(I, 255)
+		holoScale(I, vec(0.85, 2.38, 2.55))
+		holoPos(I, Base:toWorld(vec(-18.952, -106.6125, 139.807)))
+		holoAng(I, Base:toWorld(ang(90, 180, 0)))
+		holoMaterial(I, FrameMaterial)
+		holoModel(I, "models/mechanics/robotics/g1.mdl")
+		holoSkin(I, 0)
+		I++
+			holoCreate(I) #magnetic large base (1)
+		holoParent(I, Base)
+		holoColor(I, vec(255, 255, 255))
+		holoAlpha(I, 255)
+		holoScale(I, vec(1.2, 1.2, 2.3))
+		holoPos(I, Base:toWorld(vec(-18.952, -120.412, 123.66)))
+		holoAng(I, Base:toWorld(ang(0, 0, 0)))
+		holoMaterial(I, PartsMaterial)
+		holoModel(I, "models/props_phx/wheels/magnetic_large_base.mdl")
+		holoSkin(I, 0) 
+		I++
+			holoCreate(I) #g (1)
+		holoParent(I, Base)
+		holoColor(I, vec(255, 255, 255))
+		holoAlpha(I, 255)
+		holoScale(I, vec(0.85, 2.38, 2.55))
+		holoPos(I, Base:toWorld(vec(-18.952, 110.612, 139.807)))
+		holoAng(I, Base:toWorld(ang(90, 0, 0)))
+		holoMaterial(I, FrameMaterial)
+		holoModel(I, "models/mechanics/robotics/g1.mdl")
+		holoSkin(I, 0)
+
+}
+
+if(changed(clk("12")) && clk("12")){
+     
+local Base = holoEntity(120)    
+
+		I++
+		holoCreate(I) #mount connectiona
+		holoParent(I, Base)
+		holoColor(I, vec(255, 255, 255))
+		holoAlpha(I, 255)
+		holoScale(I, vec(1, 0.5, 0.5))
+		holoPos(I, Base:toWorld(vec(70, 0, -16.8)))
+		holoAng(I, Base:toWorld(ang(-0.0001, 0, -180)))
+		holoMaterial(I, PartsMaterial)
+		holoModel(I, "models/props_trainstation/mount_connection001a.mdl")
+		holoSkin(I, 0)
+		I++
+			holoCreate(I) #magnetic large base
+		holoParent(I, Base)
+		holoColor(I, vec(255, 255, 255))
+		holoAlpha(I, 255)
+		holoScale(I, vec(0.8, 0.8, 1.5))
+		holoPos(I, Base:toWorld(vec(91.1545, 0, -28.3369)))
+		holoAng(I, Base:toWorld(ang(0, 26.5788, 0)))
+		holoMaterial(I, PartsMaterial)
+		holoModel(I, "models/props_phx/wheels/magnetic_large_base.mdl")
+		holoSkin(I, 0)
+		I++
+			holoCreate(I) #roundthing
+		holoParent(I, Base)
+		holoColor(I, vec(255, 255, 255))
+		holoAlpha(I, 255)
+		holoScale(I, vec(0.5, 0.5, 0.5))
+		holoPos(I, Base:toWorld(vec(22.2, 0, -4.2)))
+		holoAng(I, Base:toWorld(ang(-0.0001, 90, 179.9999)))
+		holoMaterial(I, PartsMaterial)
+		holoModel(I, "models/hunter/misc/roundthing2.mdl")
+		holoSkin(I, 0)
+		I++
+			holoCreate(I) #platex
+		holoParent(I, Base)
+		holoColor(I, vec(255, 255, 255))
+		holoAlpha(I, 255)
+		holoScale(I, vec(1.3, 5.5, 2.7))
+		holoPos(I, Base:toWorld(vec(130.3502, -91.627, -103.4463)))
+		holoAng(I, Base:toWorld(ang(0, 89.9999, 90)))
+		holoMaterial(I, MainMaterial)
+		holoModel(I, "models/hunter/plates/plate1x1.mdl")
+		holoSkin(I, 0)
+		I++
+			holoCreate(I) #mount connectiona (1)
+		holoParent(I, Base)
+		holoColor(I, vec(255, 255, 255))
+		holoAlpha(I, 255)
+		holoScale(I, vec(0.9, 0.5, 0.4))
+		holoPos(I, Base:toWorld(vec(70, 0, -15.2)))
+		holoAng(I, Base:toWorld(ang(-0.0001, 0, 0)))
+		holoMaterial(I, PartsMaterial)
+		holoModel(I, "models/props_trainstation/mount_connection001a.mdl")
+		holoSkin(I, 0)
+		I++
+			holoCreate(I) #trapezium
+		holoParent(I, Base)
+		holoColor(I, vec(255, 255, 255))
+		holoAlpha(I, 255)
+		holoScale(I, vec(1.7, 1.8, 2.8))
+		holoPos(I, Base:toWorld(vec(112.85, -26.427, -103.4463)))
+		holoAng(I, Base:toWorld(ang(0, -63.941, 90.0001)))
+		holoMaterial(I, FrameMaterial)
+		holoModel(I, "models/hunter/triangles/trapezium.mdl")
+		holoSkin(I, 0)
+  Base = holoEntity(I)
+		I++
+			holoCreate(I) #trapezium
+		holoParent(I, Base)
+		holoColor(I, vec(255, 255, 255))
+		holoAlpha(I, 255)
+		holoScale(I, vec(0.9, 0.82, 2.9))
+		holoPos(I, Base:toWorld(vec(-15.239, 100.365, 0)))
+		holoAng(I, Base:toWorld(ang(0, -43.4, -180)))
+		holoMaterial(I, FrameMaterial)
+		holoModel(I, "models/hunter/triangles/trapezium.mdl")
+		holoSkin(I, 0)
+
+}
+
+
+if(changed(clk("13")) && clk("13")){
+     
+local Base = holoEntity(122)  
+
+		I++
+	holoCreate(I) #mount connectiona
+		holoParent(I, Base)
+		holoColor(I, vec(255, 255, 255))
+		holoAlpha(I, 255)
+		holoScale(I, vec(1, 0.5, 0.5))
+		holoPos(I, Base:toWorld(vec(70, 0, -16.8)))
+		holoAng(I, Base:toWorld(ang(-0.0001, 0, -180)))
+		holoMaterial(I, PartsMaterial)
+		holoModel(I, "models/props_trainstation/mount_connection001a.mdl")
+		holoSkin(I, 0)
+		I++
+			holoCreate(I) #mount connectiona (1)
+		holoParent(I, Base)
+		holoColor(I, vec(255, 255, 255))
+		holoAlpha(I, 255)
+		holoScale(I, vec(0.9, 0.5, 0.4))
+		holoPos(I, Base:toWorld(vec(70, 0, -15.2)))
+		holoAng(I, Base:toWorld(ang(-0.0001, 0, 0)))
+		holoMaterial(I, PartsMaterial)
+		holoModel(I, "models/props_trainstation/mount_connection001a.mdl")
+		holoSkin(I, 0)
+		I++
+			holoCreate(I) #platex
+		holoParent(I, Base)
+		holoColor(I, vec(255, 255, 255))
+		holoAlpha(I, 255)
+		holoScale(I, vec(1.3, 5.5, 2.7))
+		holoPos(I, Base:toWorld(vec(130.3502, 91.627, -103.4463)))
+		holoAng(I, Base:toWorld(ang(0, 89.9999, 90)))
+		holoMaterial(I, MainMaterial)
+		holoModel(I, "models/hunter/plates/plate1x1.mdl")
+		holoSkin(I, 0)
+		I++
+			holoCreate(I) #roundthing
+		holoParent(I, Base)
+		holoColor(I, vec(255, 255, 255))
+		holoAlpha(I, 255)
+		holoScale(I, vec(0.5, 0.5, 0.5))
+		holoPos(I, Base:toWorld(vec(22.2, 0, -4.2)))
+		holoAng(I, Base:toWorld(ang(-0.0001, 90, 179.9999)))
+		holoMaterial(I, PartsMaterial)
+		holoModel(I, "models/hunter/misc/roundthing2.mdl")
+		holoSkin(I, 0)
+		I++
+			holoCreate(I) #magnetic large base
+		holoParent(I, Base)
+		holoColor(I, vec(255, 255, 255))
+		holoAlpha(I, 255)
+		holoScale(I, vec(0.8, 0.8, 1.5))
+		holoPos(I, Base:toWorld(vec(91.1545, 0, -28.3369)))
+		holoAng(I, Base:toWorld(ang(0, -26.579, 0)))
+		holoMaterial(I, PartsMaterial)
+		holoModel(I, "models/props_phx/wheels/magnetic_large_base.mdl")
+		holoSkin(I, 0)
+		I++
+			holoCreate(I) #trapezium
+		holoParent(I, Base)
+		holoColor(I, vec(255, 255, 255))
+		holoAlpha(I, 255)
+		holoScale(I, vec(1.7, 1.8, 2.8))
+		holoPos(I, Base:toWorld(vec(112.85, 26.427, -103.4463)))
+		holoAng(I, Base:toWorld(ang(0, 63.941, 90.0001)))
+		holoMaterial(I, FrameMaterial)
+		holoModel(I, "models/hunter/triangles/trapezium.mdl")
+		holoSkin(I, 0)
+  Base = holoEntity(I)
+		I++
+			holoCreate(I) #trapezium
+		holoParent(I, Base)
+		holoColor(I, vec(255, 255, 255))
+		holoAlpha(I, 255)
+		holoScale(I, vec(0.9, 0.82, 2.9))
+		holoPos(I, Base:toWorld(vec(-15.239, 100.365, 0)))
+		holoAng(I, Base:toWorld(ang(0, -43.4, -180)))
+		holoMaterial(I, FrameMaterial)
+		holoModel(I, "models/hunter/triangles/trapezium.mdl")
+		holoSkin(I, 0)
+
+  local Base = TorsoBase
+
+                #hq sphere
+		I++ holoCreate(I,Base:toWorld(vec(-54.481, 45.433, 167.54)),vec(0.7, 0.45, 0.6),Base:toWorld(ang(0, 0, 0)),vec(72, 72, 72),"models/holograms/hq_sphere.mdl") holoMaterial(I,"models/shiny") holoParent(I, Base) holoAlpha(I, 255)
+	
+                #metalladder
+		I++ holoCreate(I,Base:toWorld(vec(-54.83, 67.0117, 143.33)),vec(3, 2, 0.8),Base:toWorld(ang(-90, -180, 0)),vec(72, 72, 72),"models/props_c17/metalladder002.mdl") holoMaterial(I,"models/shiny") holoParent(I, Base) holoAlpha(I, 255)
+	
+                #hq sphere (1)
+		I++ holoCreate(I,Base:toWorld(vec(-54.481, 88.533, 167.54)),vec(0.7, 0.45, 0.6),Base:toWorld(ang(0, 0, 0)),vec(72, 72, 72),"models/holograms/hq_sphere.mdl") holoMaterial(I,"models/shiny") holoParent(I, Base) holoAlpha(I, 255)
+	
+                #metalladder (1)
+		I++ holoCreate(I,Base:toWorld(vec(-30.8301, 67.0117, 77.7295)),vec(3, 2, 0.7),Base:toWorld(ang(0, 180, 0)),vec(72, 72, 72),"models/props_c17/metalladder002.mdl") holoMaterial(I,"models/shiny") holoParent(I, Base) holoAlpha(I, 255)
+
+  I++
+    Base = holoCreate(I) 
+  		holoParent(I, TorsoBase)
+    holoAlpha(I,0)
+    
+
+                #step beam 
+		I++ holoCreate(I,Base:toWorld(vec(-0.0342, 0.0205, 3.6865)),vec(0.315, 0.81, 0.45),Base:toWorld(ang(0, 0, 0)),vec(255, 255, 255),"models/mechanics/solid_steel/step_beam_16.mdl") holoMaterial(I,"") holoParent(I, Base) holoAlpha(I, 255)
+	
+                #straight 
+		I++ holoCreate(I,Base:toWorld(vec(0, 0, 5.5)),vec(0.3, 0.42, 0.3),Base:toWorld(ang(0, 0, 180)),vec(255, 255, 255),"models/xqm/CoasterTrack/straight_1.mdl") holoMaterial(I,"") holoParent(I, Base) holoAlpha(I, 255)
+
+}
+
+if( changed( Cannon ) )
+{
+    
+    Cannon_Base = holoEntity( 142 )
+    
+    Cannon:propFreeze( 1 )
+    
+    Cannon:setAng( Cannon_Base:toWorld( ang( 0 , 0 , 0 ) ) )
+    
+    Cannon:setPos( Cannon_Base:toWorld( vec( 0 , 0 , 8 ) ) )
+    
+    timer( "Parr" , 2000 )
+
+}
+
+if( clk( "Parr" ) )
+{
+    
+    Cannon_Base = holoEntity( 142 )
+    
+    Cannon:parentTo( Cannon_Base )    
+    
+}
