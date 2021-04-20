@@ -1,0 +1,163 @@
+@name Mandy(MP)
+@persist [LS WL List]:array [ Owner Chip LSP ]:entity [Command Text URL]:string WLC I Can TrackExist
+@model models/props_lab/reciever01d.mdl 
+
+if(first()|dupefinished()){
+    
+    Owner = owner()
+    
+    Chip = entity()
+    
+    WL:pushString( Owner:steamID() )
+    
+    WLC = WL:count()
+
+print(     
+"
+---Chat_Commands---
+
+    > list time(s)
+
+    like:
+
+    > list 10
+"
+)
+    
+}
+
+runOnChat(1)
+
+if(changed(lastSaidWhen()))
+{
+    
+    LS = lastSaid():explode(" ")
+    
+    LSP = lastSpoke()
+    
+    Can = 0
+    
+    while(I < WLC && perf())
+    {
+        
+            I++
+
+            if(LSP:steamID() == WL[I,string])
+            {
+            
+            Can = 1
+            
+            }
+        
+    }
+    
+    I = 0
+
+    if(Can && LS[1,string] == ">")
+    {
+        
+        Command = LS[2,string]
+        
+        Text = LS[3,string]
+
+        if(Command == "play")
+        {
+            
+            List:pushString(Text)
+            
+            hint("New song added!",3)
+
+        }
+        
+        TrackExist = List:exists(1)
+
+        if(Command == "skip")
+        {
+            
+            if(TrackExist)
+            {
+                
+                URL = ""
+
+            }
+            else
+            {
+            
+            hint("There's not any song in queue!",3)
+            
+            }
+            
+        }
+        
+        if(!URL && TrackExist)
+        {
+            
+                URL = List[1,string]
+            
+                List:remove(1)
+
+                Change = 0
+                
+                Chip:streamStart(1,100,URL)
+  
+                hint("Playing new song!",3)
+            
+        }
+ 
+        if(LSP == Owner)
+        {
+            
+            if(Command == "add"){
+            
+            WL:pushString(Text)
+            
+            WLC = WL:count()
+            
+            hint("Player added!",3)
+            
+            }
+            
+            if(Command == "delet")
+            {
+                
+                while(I < WLC && perf())
+                {
+        
+                    I++
+        
+                    if(Text == WL[I,string])
+                    {
+            
+                        WL:remove(I)
+                        
+                        hint("Player removed!",3)
+              
+                    }
+        
+                }
+                
+                I = 0            
+                 
+            }
+            
+            if(Command == "list"){
+                
+hint("
+---CommandList---
+
+[WhiteListMembers]
+> play [URL]
+> skip [URL]
+[OwnerOnly]
+> add [STEAM_ID]
+> delet [STEAM_ID]
+
+",Text:toNumber())
+            
+            }
+            
+        }
+        
+    }
+    
+}
