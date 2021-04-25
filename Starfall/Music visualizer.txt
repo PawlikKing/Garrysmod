@@ -1,0 +1,109 @@
+--@name Szaj wraj lajka dajmond
+--@author PawikLord
+
+
+if not SERVER then
+
+    Line_count = 15
+
+    Chip = chip()
+
+    Url = "Url here"
+    
+    Models = { "models/player/skeleton.mdl" } 
+    
+    Models_count = table.getn( Models )
+    
+    local I = 0
+    
+    local Holograms = {}
+    
+    while I < Line_count && holograms.canSpawn() do
+    
+        I = I + 1
+        
+        Scl = holograms.create( Chip:getPos() + Vector( 0 , 25 * ( I - 0.5 ) - ( 25 * Line_count ) / 2 , 0 ) , Chip:getAngles(), Models[ math.round( math.random( 1 , Models_count ) , 0 ) ] )
+
+        Scl:setParent( Chip )
+ 
+        Scl:setMaterial( "models/shiny" )    
+        
+        Scl:suppressEngineLighting( true )
+        
+        table.insert( Holograms , I , Scl )
+    
+    end
+    
+    function msc( Url )
+    
+        if Sound then Sound:stop() end
+  
+        bass.loadURL( Url , "3d noblock" , function( Bass , Object , Error ) 
+        
+            if Bass then
+        
+                Sound = Bass
+        
+                Bass:setFade( 500 , 100000 )
+                
+                Bass:setVolume( 1 )
+                
+                pcall( Bass.setLooping , Bass , true )
+                
+                hook.add( "think" , "" , function()
+            
+                    Chip_position = Chip:getPos()
+        
+                    Bass:setPos( Chip_position )
+            
+                    local Levels = Bass:getFFT( Line_count )
+            
+                    local I = 0
+            
+                    while I < Line_count do
+            
+                        I = I + 1
+                
+                        local Hologram = Holograms[I]
+                
+                        local Level = Levels[I]
+                    
+                        if Level then Lev = Level else Lev = 0 end
+                
+                        Hologram:setScale( Vector( 1 , 1 , 1 + Lev * 2 ) )
+                    
+                        Hologram:setColor( Color( 0 , 0 , 2550 * Lev ) )
+                
+                        Hologram:setAnimation( "taunt_muscle" , Lev )
+                                        
+                    end
+            
+                end)
+                
+            end
+    
+        end)
+    
+    end   
+    
+    hook.add("permissionrequest", "", function()
+    
+        if hasPermission( "bass.loadURL" , Url ) then
+    
+            msc( Url )
+    
+        end
+
+    end)
+    
+    setupPermissionRequest( {"bass.loadURL"} , "Jestem gejem?" , true ) 
+    
+    if string.byte( Url , 0 , 1 ) then
+    
+        if not hasPermission("bass.loadURL", Url)  then return end
+
+        msc(Url)
+        
+    end
+    
+end
