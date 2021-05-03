@@ -1,0 +1,317 @@
+@name Hydra
+@inputs Friends:array
+@outputs 
+@persist [ User Weapon ]:entity I Weapon_change_lock 
+@persist Missiles_Inside_count Missiles_Outside_count [ Missiles_Inside Missiles_Outside ]:array
+@persist Defflaut_missile_mass Defflaut_ranger_distance 
+@persist Target_position:vector 
+@persist Self_destruct_list:array Timmer Timmer_Clk
+@trigger 
+
+#WeaponCore
+
+if( first() | dupefinished() )
+{
+    
+    User = owner()
+    
+    Weapon = holoCreate( 0 ) 
+    
+    holoParentAttachment( 0 , User , "anim_attachment_RH" ) 
+    
+    holoAlpha( 0 , 0 )
+    
+    timer( "set" , 100 )  
+
+    timer( "load_model" , 200 )  
+    
+}
+
+if( clk( "set" ) )
+{
+    
+    holoPos( 0 , User:attachmentPos( "anim_attachment_RH" ) )
+    
+    holoAng( 0 , User:toWorld( ang() ) )
+    
+}
+
+#Apperance
+
+if( clk( "load_model" ) )
+{
+    
+    I++ holoCreate( I , Weapon:toWorld( vec( 13.6 , -1.2 , 3.5 ) ) , vec( 1 ) , Weapon:toWorld( ang( 12 , 180, 0 ) ) , vec( 127 , 0 , 255 ) , "models/weapons/w_rocket_launcher.mdl" ) holoParent( I , Weapon ) holoMaterial( I , "models/XQM//SquaredMat" )
+    
+    I++ holoCreate( I , Weapon:toWorld( vec( 13.6 , -5 , 3.5 ) ) , vec( 1 ) , Weapon:toWorld( ang( 12 , 180, 0 ) ) , vec( 127 , 0 , 255 ) , "models/weapons/w_rocket_launcher.mdl" ) holoParent( I , Weapon ) holoMaterial( I , "models/XQM//SquaredMat" )
+    
+    I++ holoCreate( I , Weapon:toWorld( vec( 13.6 , -3.1, 7 ) ) , vec( 1 ) , Weapon:toWorld( ang( 12 , 180, 0 ) ) , vec( 127 , 0 , 255 ) , "models/weapons/w_rocket_launcher.mdl" ) holoParent( I , Weapon ) holoMaterial( I , "models/XQM//SquaredMat" )
+
+    I++ holoCreate( I , Weapon:toWorld( vec( 5 , 0 , 10 ) ) , vec( 0.3 ) , Weapon:toWorld( ang( 12 , 180, 45 ) ) , vec( 127 , 0 , 255 ) , "models/props_lab/monitor02.mdl" ) holoParent( I , Weapon ) holoSkin( I , 1 )
+
+    I++ holoCreate( I , Weapon:toWorld( vec( 5 , -6, 11 ) ) , vec( 0.2 , 0.1 , 0.2 ) , Weapon:toWorld( ang( -12 , 0 , 65 ) ) , vec( 32 ) , "models/props_wasteland/prison_heater002a.mdl" ) holoParent( I , Weapon ) holoMaterial( I , "models/shiny" )
+    
+    Defflaut_missile_mass = 200
+    
+    Defflaut_ranger_distance = 700
+               
+}
+
+interval( 60 )
+
+#Appear
+
+if( changed( User:weapon() ) )
+{
+    
+    if( User:weapon() == User:weapon( "weapon_rpg" ) )
+    {
+        
+        for( H = 1 , I , 1 )
+        {
+            
+            holoAlpha( H , 255 )
+            
+        }
+        
+        Weapon_change_lock = 1
+        
+        Weapon:streamStart( 1 , "https://www.dropbox.com/s/xbnl8rdmiknbc41/Hydra%20Online.mp3?dl=1" )
+        
+    }elseif( Weapon_change_lock ){
+    
+        for( H = 1 , I , 1 )
+        {
+            
+            holoAlpha( H , 0 )
+            
+        }
+        
+        Weapon_change_lock = 0
+        
+        Weapon:streamStart( 2 , "https://www.dropbox.com/s/17af6h3axxfgcb7/Hydra%20Offline.mp3?dl=1" )
+    
+    }
+    
+}
+
+#Loader
+
+while( Missiles_Inside_count < 9 && Weapon_change_lock && propCanCreate() && perf() )
+{
+    
+    local Missile = propSpawn( "models/props_phx/ww2bomb.mdl" , Weapon:toWorld( vec( 30 , 0 , 0 ) ) , Weapon:toWorld( ang( ) ) , 1 )
+    
+    Missile:parentTo( Weapon )
+    
+    noCollideAll( Missile , 1 )
+    
+    Missile:setAlpha( 0 )
+    
+    Missiles_Inside:pushEntity( Missile )
+    
+    Missiles_Inside_count = Missiles_Inside:count()
+    
+    
+    Missile:propGravity( 0 )
+    
+}
+
+#Fire
+
+if( changed( User:keyAttack1() ) && User:keyAttack1() && Weapon_change_lock && Missiles_Inside_count > 2 )
+{
+    
+    Timmer++
+    
+    timer( Timmer:toString() , 8000 )    
+    
+    local I = 0
+    
+    while( I < 3 && perf() )
+    {
+        
+        I++
+    
+        local Missile = Missiles_Inside[ 1 , entity ]
+        
+        Missile:setPos( Weapon:toWorld( vec( 30 , random(5) , random(5) ) ) )
+        
+        Missile:setAng( Weapon:toWorld( ang( -45 , 0 , 0 ) ) )
+        
+        Missile:deparent()
+        
+        Missile:setTrails( 10 , 50 , 1 , "trails/smoke" , vec( random( 255 ) , 0 , 255 ) , 255 )
+        
+        Missile:propFreeze( 0 )
+        
+        Missile:soundPlay( I * Timmer , 10000 , "thrusters/rocket04.wav" )
+        
+        local Holo = 1000 + I + Timmer * 100 holoCreate( Holo , Missile:toWorld( vec( ) ) , vec( 3 ) , Missile:toWorld( ang( ) ) , vec( 127 , 0 , 255 ) , "models/weapons/w_missile_launch.mdl" ) holoParent( Holo , Missile ) holoMaterial( Holo , "models/XQM//SquaredMat" )
+        
+        Self_destruct_list:pushEntity( Missile )
+    
+        Missiles_Outside:pushEntity( Missile )
+        
+        Missiles_Outside_count = Missiles_Outside:count()
+        
+        Missiles_Inside:remove( 1 )
+        
+        Missiles_Inside_count = Missiles_Inside:count()
+    
+    }
+    
+}
+
+local I = 0
+
+#Target
+
+findByClass( "player" )
+findExcludePlayer(owner())
+findExcludeEntities(Friends)
+Target_position = findClosest( Weapon:pos() ):pos()
+
+#Sterring
+
+while( I < Missiles_Outside_count && perf() )
+{
+    
+    I++
+    
+    local Missile = Missiles_Outside[ I , entity ]    
+    
+    if( !Missile:isValid() )
+    {
+        
+        Missiles_Outside:remove( I )
+        
+        Missiles_Outside_count = Missiles_Outside:count()
+        
+    }
+    
+    #MissileData
+    
+    local Forward = Missile:forward()
+    
+    local Right = Missile:right()
+    
+    local Up = Missile:up()
+    
+    local Vel = Missile:vel()
+    
+    local Ang_Vel = Missile:angVel()
+    
+    local Missile_position = Missile:pos()
+    
+    #Rangers
+    
+    rangerFilter( Missile )
+    
+    local R_Forward = rangerOffset( Defflaut_ranger_distance , Missile_position , Forward ):distance()
+    
+    rangerFilter( Missile )
+    
+    local R_Backward = rangerOffset( -Defflaut_ranger_distance , Missile_position , Forward ):distance()  
+    
+    rangerFilter( Missile )  
+    
+    local R_Right = rangerOffset( Defflaut_ranger_distance , Missile_position , Right ):distance()
+    
+    rangerFilter( Missile )
+    
+    local R_Left = rangerOffset( -Defflaut_ranger_distance , Missile_position , Right ):distance()
+    
+    rangerFilter( Missile )
+    
+    local R_Up = rangerOffset( Defflaut_ranger_distance , Missile_position , Up ):distance()
+    
+    rangerFilter( Missile )
+    
+    local R_Down = rangerOffset( -Defflaut_ranger_distance , Missile_position , Up ):distance()
+    
+    #Pitch&Yaw
+    
+    local Aim_Pos = Target_position - Missile_position
+    
+    rangerFilter( Missile )
+    
+    local R_Scanner = rangerOffset( 10000 , Missile_position , Aim_Pos ):pos()
+    
+    Pitch = 0
+    
+    Yaw = 0
+    
+    Speed_reductor = 1 - ( ( R_Forward + R_Backward + R_Right + R_Left + R_Up + R_Down ) / 6 ) / Defflaut_ranger_distance
+    
+    if( R_Scanner:distance( Target_position ) > 100 )
+    {
+        
+        Pitch = ( R_Down - R_Up ) + ( R_Forward - R_Backward )
+    
+        Yaw = R_Left - R_Right
+        
+    }
+    
+    local Aim_Target = ( Aim_Pos ):toAngle() + ang( Pitch , Yaw , 0 )/Defflaut_ranger_distance * 90
+    
+    #Forces
+    
+    local Force = Forward * ( 300 + ( 300 * Speed_reductor ) ) - Vel / 3
+    
+    local Ang_Force = Missile:toLocal( Aim_Target ) - Ang_Vel / 2
+    
+    Missile:applyAngForce( Ang_Force * Defflaut_missile_mass )
+    
+    Missile:applyForce( Force * Defflaut_missile_mass )
+    
+    #Detonate
+    
+    if( Missile_position:distance( Target_position ) < 150 )
+    {
+        
+       Missile:propBreak() 
+        
+    }
+    
+}
+
+#Unload
+
+while( Missiles_Inside_count > 0 && !Weapon_change_lock && perf() )
+{
+    local Missile = Missiles_Inside[ 1 , entity ]
+    
+    Missile:propDelete()
+    
+    Missiles_Inside:remove( 1 )
+    
+    Missiles_Inside_count = Missiles_Inside:count()
+
+}
+
+if( clk( ( Timmer_Clk + 1 ):toString() ) )
+{
+    
+    Timmer_Clk++
+    
+    local I = 0
+    
+    while( I < 3 && perf() )
+    {
+        
+        I++
+        
+        local Missile = Self_destruct_list[ 1 , entity ]
+        
+        Missile:propBreak()
+        
+        Self_destruct_list:remove( 1 )
+        
+    }
+    
+}
+
+
+
+

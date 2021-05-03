@@ -21,8 +21,6 @@ if( first() | dupefinished() )
     
     E:propGravity( 0 )
     
-    print( 2.5 * round( 1 / 0.02540 , 2 ) )
-    
     InX = ";"
     
     Owner = owner()

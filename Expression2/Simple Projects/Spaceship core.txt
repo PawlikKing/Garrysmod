@@ -1,0 +1,205 @@
+@name Rupture
+
+@inputs Pilot_chair:entity Camera_wirelink:wirelink Ship:entity
+
+@outputs Color:vector Engines_thrust VelL_speed
+
+@persist Ship_mass
+
+@persist Key_Forward Key_Backward Key_Right Key_Left Key_Up Key_Down Key_Speed #Keys
+
+# Ship = basic prop ;P
+
+if( duped() )
+{
+    
+    reset()
+    
+}
+
+if( first() | dupefinished() )
+{
+    
+    #==========MajorSets==========#
+     
+      Ship_mass = Ship:mass()
+    
+    #===========ForFirst===========#
+    
+      Ship:propGravity( 0 )
+    
+      Ship:propDrag( 0 )
+    
+    #==========Functions==========#
+    
+      function number alwaysPositive(A)
+      {
+        
+          if(A < 0)
+          {
+            
+              B = -A 
+            
+          }else
+          {
+        
+              B = A 
+        
+          }
+        
+          return B
+        
+      }
+    
+}
+
+
+#============Camera===========#   
+
+    if(changed(Camera_wirelink)){
+
+        Camera_wirelink[ "Activated" , number ] = 1 
+
+        Camera_wirelink[ "Angle" , angle ] = Ship:toWorld( ang() )
+
+        Camera_wirelink[ "Position" , vector ] = Pilot_chair:toWorld( vec( 0 , 0 , 50 ) )
+
+        Camera_wirelink[ "Parent" , entity ] = Ship
+
+    }
+
+#============Ticks============#
+
+  interval( 60 )
+
+#===========DataSuck==========#
+
+  # ========== Vel_vectors ==========
+
+    local Ship_Vel = Ship:vel()
+
+    local Ship_VelL = Ship:velL()
+
+    local Ship_AngVel = Ship:angVel()
+
+  #VelL_data
+
+    local VelL_x = Ship_VelL:x()
+
+    local VelL_y = Ship_VelL:y()
+
+    local VelL_z = Ship_VelL:z()
+
+  #AngVel_data
+
+    local AngVel_pitch = Ship_AngVel:pitch()
+
+    local AngVel_yaw = Ship_AngVel:yaw()
+
+    local AngVel_roll = Ship_AngVel:roll()
+    
+  #Speed
+
+          VelL_speed = ( alwaysPositive( VelL_x ) + alwaysPositive( VelL_y ) + alwaysPositive( VelL_z ) ) / 3
+
+    local AngVel_speed = ( alwaysPositive( AngVel_pitch ) + alwaysPositive( AngVel_yaw ) + alwaysPositive( AngVel_roll ) ) / 3
+    
+  #Major_Speed
+
+    local Major_speed = ( VelL_speed + AngVel_speed ) / 2
+    
+  # ============= Pilot =============
+    
+    local Pilot = Pilot_chair:driver()    
+    
+  # Sterring_Keys
+
+    runOnKeys( Pilot , 1 )
+
+    if( changed( keyClk() ) )
+    {
+
+        Key_Forward = Pilot:keyForward()
+        
+        Key_Backward = Pilot:keyBack()
+        
+        Key_Right = Pilot:keyRight()
+        
+        Key_Left = Pilot:keyLeft()
+        
+        Key_Up = Pilot:keyJump()
+        
+        Key_Down = Pilot:keyDuck()
+        
+        Key_Speed = Pilot:keySprint()
+    
+    }
+
+  # Pilot_point_angle
+
+    local Pilot_point_angle = Camera_wirelink[ "CamAng" , angle ]
+
+    local Ship_point_angle = Ship:toLocal( Pilot_point_angle - ang( alwaysPositive( AngVel_yaw ) / 3 , 0 , AngVel_yaw ) )
+
+#============Forces===========#     
+
+  # True Force
+
+    if( Key_Forward && Engines_thrust < 5)
+    {
+        
+        Engines_thrust = Engines_thrust + 0.1
+        
+    }
+    
+    if( Key_Backward && Engines_thrust > 0 )
+    {
+        
+        Engines_thrust = Engines_thrust - 0.1
+        
+    }
+
+
+    local Angle_force = Ship_point_angle - Ship_AngVel
+    
+    local Forward_force = Ship:forward() * Engines_thrust
+    
+    local Right_force = Ship:right() * ( Key_Right - Key_Left )
+    
+    local Up_force = Ship:up() * ( Key_Up - Key_Down )
+    
+    local Velocity_force = ( Forward_force + Right_force + Up_force ) * 100 - Ship_Vel / 10
+
+  # Engine && Gyro
+    
+    Ship:applyAngForce( Angle_force * Ship_mass )
+
+    Ship:applyForce( Velocity_force * Ship_mass )
+
+if( changed( Key_Forward ) && Key_Forward )
+{
+    
+    soundPlay( 1 , 100 , "ambient/ambience/wind_light02_loop.wav" )
+    
+}
+
+    soundPitch( 1 , VelL_x / 25 )
+    
+    Color = vec( 29 , 0 , 255 ) * VelL_x / 100
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    

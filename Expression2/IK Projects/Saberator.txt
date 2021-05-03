@@ -1,0 +1,861 @@
+@name Saberator
+@inputs CamLink:wirelink 
+@outputs 
+@persist [E Chair]:entity Mass 
+@persist Throttle EnginePower Power Rot
+@persist Active Open EyeAng:angle Functioning
+@persist [S1 S2 S3 S4 S5 S6 S7 S8 R1 R2]:entity
+@persist ApplyForce:vector ApplyAngForce:angle
+@persist Switch N1 N2 Snd
+@persist [LP1 LP2 LP3 LP4 LP5 LP6 LP7 LP8 Mid Bez1 Bez2 Bez3 Bez4 Bez5 Bez6 Bez7 Bez8]:vector
+@persist VelX VelY VelZ 
+@model models/hunter/plates/plate1x1.mdl 
+
+if(duped()){reset()}
+
+if(first()|dupefinished()){
+ 
+#Worst code I've ever done / Old code
+    
+#==========MainSets===========#   
+
+    Mass = 50000
+
+#==========MajorSets==========#   
+
+    E = entity()
+        
+    E:setMass(Mass)
+    
+    E:setAlpha(0)
+    
+    propSpawnUndo(1)
+    
+    Snd = 1000
+
+#==========Materials==========#   
+
+#==========HoloBones==========#   
+
+#==========HoloTimers=========#
+
+    local T = 0
+
+    while(T < 13){
+    
+    T++
+    
+    timer(T:toString(),2000*T)
+    
+    }
+
+#===========Spawner===========#
+
+    Chair = seatSpawn("",E:toWorld(vec(0, 0, -10)),E:toWorld(ang(0,-90,0)),1)
+
+    Chair:parentTo(E)
+
+#==========Functions==========#
+
+#Rot
+
+    function rotorCreate(I,Basis:entity,Pos:vector,Ang:angle){
+        
+        local Scale = 5
+
+                #signpole
+		I++ local Base = holoCreate(I,Basis:toWorld(Pos*Scale),vec(1, 1, 0.1)*Scale,Basis:toWorld(Ang),vec(255, 255, 255),"models/props_c17/signpole001.mdl") holoMaterial(I,"") holoParent(I, Basis) holoAlpha(I, 255)
+	
+                #arm base b
+		I++ holoCreate(I,Base:toWorld(vec(0.8, 0, 10.722)*Scale),vec(0.08, 0.08, 0.1)*Scale,Base:toWorld(ang(-90, 180, 0)),vec(255, 255, 255),"models/mechanics/articulating/arm_base_b.mdl") holoMaterial(I,"") holoParent(I, Base) holoAlpha(I, 255)
+	
+                #arm base b (1)
+		I++ holoCreate(I,Base:toWorld(vec(-0.8, 0, 10.722)*Scale),vec(0.08, 0.08, 0.1)*Scale,Base:toWorld(ang(-90, 0, 0)),vec(255, 255, 255),"models/mechanics/articulating/arm_base_b.mdl") holoMaterial(I,"") holoParent(I, Base) holoAlpha(I, 255)
+	
+                #arm base b (2)
+		I++ holoCreate(I,Base:toWorld(vec(0, -0.8, 10.722)*Scale),vec(0.08, 0.08, 0.1)*Scale,Base:toWorld(ang(-90, 90, 0)),vec(255, 255, 255),"models/mechanics/articulating/arm_base_b.mdl") holoMaterial(I,"") holoParent(I, Base) holoAlpha(I, 255)
+	
+                #arm base b (3)
+		I++ holoCreate(I,Base:toWorld(vec(0, 0.8, 10.722)*Scale),vec(0.08, 0.08, 0.1)*Scale,Base:toWorld(ang(-90, -90, 0)),vec(255, 255, 255),"models/mechanics/articulating/arm_base_b.mdl") holoMaterial(I,"") holoParent(I, Base) holoAlpha(I, 255)
+	
+                #hq cylinder
+		I++ local C1 = holoCreate(I,Base:toWorld(vec(0, -3.2, 9.459)*Scale),vec(0.1, 0.1, 0.2)*Scale,Base:toWorld(ang(0, 90, 0)),vec(255, 255, 255),"models/holograms/hq_cylinder.mdl") holoMaterial(I,"") holoParent(I, Base) holoAlpha(I, 255)
+	
+                #hq cubinder
+		I++ holoCreate(I,C1:toWorld(vec(-0.6, 0, 0)*Scale),vec(0.11, 0.11, 0.11)*Scale,C1:toWorld(ang(-90, 0, 0)),vec(255, 255, 255),"models/holograms/hq_cubinder.mdl") holoMaterial(I,"") holoParent(I, C1) holoAlpha(I, 255)
+	
+                #combine rifle ammo
+		I++ holoCreate(I,C1:toWorld(vec(1.6, 0, 0)*Scale),vec(0.2, 0.2, 0.2)*Scale,C1:toWorld(ang(-90, 180, 180)),vec(255, 255, 255),"models/Items/combine_rifle_ammo01.mdl") holoMaterial(I,"") holoParent(I, C1) holoAlpha(I, 255)
+	
+                #hq cubinder (1)
+		I++ holoCreate(I,C1:toWorld(vec(0.36, 0, 0)*Scale),vec(0.11, 0.11, 0.05)*Scale,C1:toWorld(ang(90, 0, 0)),vec(255, 255, 255),"models/holograms/hq_cubinder.mdl") holoMaterial(I,"") holoParent(I, C1) holoAlpha(I, 255)
+	
+                #magnetic small base
+		I++ local M1 = holoCreate(I,C1:toWorld(vec(-0.9, 0, 0)*Scale),vec(0.178, 0.178, 0.15)*Scale,C1:toWorld(ang(90, -90, 90)),vec(255, 255, 255),"models/props_phx/wheels/magnetic_small_base.mdl") holoMaterial(I,"") holoParent(I, C1) holoAlpha(I, 255)
+
+                #combine fenceb
+		I++ holoCreate(I,M1:toWorld(vec(0.2, 0, 10.68)*Scale),vec(0.1, 0.08, 0.25)*Scale,M1:toWorld(ang(0, 0, 0)),vec(255, 255, 255),"models/props_combine/combine_fence01b.mdl") holoMaterial(I,"") holoParent(I, M1) holoAlpha(I, 255)
+
+                #combine fencea
+		I++ holoCreate(I,M1:toWorld(vec(0.2, 0, 10.68)*Scale),vec(0.1, 0.08, 0.25)*Scale,M1:toWorld(ang(0, 0, 0)),vec(255, 255, 255),"models/props_combine/combine_fence01a.mdl") holoMaterial(I,"") holoParent(I, M1) holoAlpha(I, 255)
+	
+                #g
+		I++ holoCreate(I,M1:toWorld(vec(0, 0, 0.9)*Scale),vec(0.03, 0.02, 0.02)*Scale,M1:toWorld(ang(-0.0001, 90, 90)),vec(255, 255, 255),"models/mechanics/roboticslarge/g1.mdl") holoMaterial(I,"") holoParent(I, M1) holoAlpha(I, 255)
+	
+                #hq cylinder (1)
+		I++ local C2 = holoCreate(I,Base:toWorld(vec(3.2, 0, 9.459)*Scale),vec(0.1, 0.1, 0.2)*Scale,Base:toWorld(ang(0, 180, 0)),vec(255, 255, 255),"models/holograms/hq_cylinder.mdl") holoMaterial(I,"") holoParent(I, Base) holoAlpha(I, 255) 
+	
+                #hq cubinder
+		I++ holoCreate(I,C2:toWorld(vec(-0.6, 0, 0)*Scale),vec(0.11, 0.11, 0.11)*Scale,C2:toWorld(ang(-90, 0, 0)),vec(255, 255, 255),"models/holograms/hq_cubinder.mdl") holoMaterial(I,"") holoParent(I, C2) holoAlpha(I, 255) 
+	
+                #combine rifle ammo
+		I++ holoCreate(I,C2:toWorld(vec(1.6, 0, 0)*Scale),vec(0.2, 0.2, 0.2)*Scale,C2:toWorld(ang(-90, 180, 180)),vec(255, 255, 255),"models/Items/combine_rifle_ammo01.mdl") holoMaterial(I,"") holoParent(I, C2) holoAlpha(I, 255)
+	
+                #hq cubinder (1)
+		I++ holoCreate(I,C2:toWorld(vec(0.36, 0, 0)*Scale),vec(0.11, 0.11, 0.05)*Scale,C2:toWorld(ang(90, 0, 0)),vec(255, 255, 255),"models/holograms/hq_cubinder.mdl") holoMaterial(I,"") holoParent(I, C2) holoAlpha(I, 255)
+	
+                #magnetic small base
+		I++ local M2 = holoCreate(I,C2:toWorld(vec(-0.9, 0, 0)*Scale),vec(0.178, 0.178, 0.15)*Scale,C2:toWorld(ang(90, -90, 90)),vec(255, 255, 255),"models/props_phx/wheels/magnetic_small_base.mdl") holoMaterial(I,"") holoParent(I, C2) holoAlpha(I, 255) 
+	
+                #combine fenceb
+		I++ holoCreate(I,M2:toWorld(vec(0.2, 0, 10.68)*Scale),vec(0.1, 0.08, 0.25)*Scale,M2:toWorld(ang(0, 0, 0)),vec(255, 255, 255),"models/props_combine/combine_fence01b.mdl") holoMaterial(I,"") holoParent(I, M2) holoAlpha(I, 255)
+	
+                #combine fencea
+		I++ holoCreate(I,M2:toWorld(vec(0.2, 0, 10.68)*Scale),vec(0.1, 0.08, 0.25)*Scale,M2:toWorld(ang(0, 0, 0)),vec(255, 255, 255),"models/props_combine/combine_fence01a.mdl") holoMaterial(I,"") holoParent(I, M2) holoAlpha(I, 255)
+	
+                #g
+		I++ holoCreate(I,M2:toWorld(vec(0, 0, 0.9)*Scale),vec(0.03, 0.02, 0.02)*Scale,M2:toWorld(ang(-0.0001, 90, 90)),vec(255, 255, 255),"models/mechanics/roboticslarge/g1.mdl") holoMaterial(I,"") holoParent(I, M2) holoAlpha(I, 255)
+
+                #hq cylinder (2)
+		I++ local C3 = holoCreate(I,Base:toWorld(vec(-3.2, 0, 9.459)*Scale),vec(0.1, 0.1, 0.2)*Scale,Base:toWorld(ang(0, 0, 0)),vec(255, 255, 255),"models/holograms/hq_cylinder.mdl") holoMaterial(I,"") holoParent(I, Base) holoAlpha(I, 255) 
+	
+                #hq cubinder
+		I++ holoCreate(I,C3:toWorld(vec(-0.6, 0, 0)*Scale),vec(0.11, 0.11, 0.11)*Scale,C3:toWorld(ang(-90, 0, 0)),vec(255, 255, 255),"models/holograms/hq_cubinder.mdl") holoMaterial(I,"") holoParent(I, C3) holoAlpha(I, 255)
+	
+                #combine rifle ammo
+		I++ holoCreate(I,C3:toWorld(vec(1.6, 0, 0)*Scale),vec(0.2, 0.2, 0.2)*Scale,C3:toWorld(ang(-90, 180, 180)),vec(255, 255, 255),"models/Items/combine_rifle_ammo01.mdl") holoMaterial(I,"") holoParent(I, C3) holoAlpha(I, 255)
+	
+                #hq cubinder (1)
+		I++ holoCreate(I,C3:toWorld(vec(0.36, 0, 0)*Scale),vec(0.11, 0.11, 0.05)*Scale,C3:toWorld(ang(90, 0, 0)),vec(255, 255, 255),"models/holograms/hq_cubinder.mdl") holoMaterial(I,"") holoParent(I, C3) holoAlpha(I, 255)
+	
+                #magnetic small base
+		I++ local M3 = holoCreate(I,C3:toWorld(vec(-0.9, 0, 0)*Scale),vec(0.178, 0.178, 0.15)*Scale,C3:toWorld(ang(90, -90, 90)),vec(255, 255, 255),"models/props_phx/wheels/magnetic_small_base.mdl") holoMaterial(I,"") holoParent(I, C3) holoAlpha(I, 255) 
+	
+                #combine fenceb
+		I++ holoCreate(I,M3:toWorld(vec(0.2, 0, 10.68)*Scale),vec(0.1, 0.08, 0.25)*Scale,M3:toWorld(ang(0, 0, 0)),vec(255, 255, 255),"models/props_combine/combine_fence01b.mdl") holoMaterial(I,"") holoParent(I, M3) holoAlpha(I, 255)
+	
+                #combine fencea
+		I++ holoCreate(I,M3:toWorld(vec(0.2, 0, 10.68)*Scale),vec(0.1, 0.08, 0.25)*Scale,M3:toWorld(ang(0, 0, 0)),vec(255, 255, 255),"models/props_combine/combine_fence01a.mdl") holoMaterial(I,"") holoParent(I, M3) holoAlpha(I, 255)
+	
+                #g
+		I++ holoCreate(I,M3:toWorld(vec(0, 0, 0.9)*Scale),vec(0.03, 0.02, 0.02)*Scale,M3:toWorld(ang(-0.0001, 90, 90)),vec(255, 255, 255),"models/mechanics/roboticslarge/g1.mdl") holoMaterial(I,"") holoParent(I, M3) holoAlpha(I, 255)
+	
+                #hq cylinder (3)
+		I++ local C4 = holoCreate(I,Base:toWorld(vec(0, 3.2, 9.459)*Scale),vec(0.1, 0.1, 0.2)*Scale,Base:toWorld(ang(0, -90, 0)),vec(255, 255, 255),"models/holograms/hq_cylinder.mdl") holoMaterial(I,"") holoParent(I, Base) holoAlpha(I, 255) 
+	
+                #hq cubinder
+		I++ holoCreate(I,C4:toWorld(vec(-0.6, 0, 0)*Scale),vec(0.11, 0.11, 0.11)*Scale,C4:toWorld(ang(-90, 0, 0)),vec(255, 255, 255),"models/holograms/hq_cubinder.mdl") holoMaterial(I,"") holoParent(I, C4) holoAlpha(I, 255)
+	
+                #combine rifle ammo
+		I++ holoCreate(I,C4:toWorld(vec(1.6, 0, 0)*Scale),vec(0.2, 0.2, 0.2)*Scale,C4:toWorld(ang(-90, 180, 180)),vec(255, 255, 255),"models/Items/combine_rifle_ammo01.mdl") holoMaterial(I,"") holoParent(I, C4) holoAlpha(I, 255)
+	
+                #hq cubinder (1)
+		I++ holoCreate(I,C4:toWorld(vec(0.36, 0, 0)*Scale),vec(0.11, 0.11, 0.05)*Scale,C4:toWorld(ang(90, 0, 0)),vec(255, 255, 255),"models/holograms/hq_cubinder.mdl") holoMaterial(I,"") holoParent(I, C4) holoAlpha(I, 255)
+	
+                #magnetic small base
+		I++ local M4 = holoCreate(I,C4:toWorld(vec(-0.9, 0, 0)*Scale),vec(0.178, 0.178, 0.15)*Scale,C4:toWorld(ang(90, -90, 90)),vec(255, 255, 255),"models/props_phx/wheels/magnetic_small_base.mdl") holoMaterial(I,"") holoParent(I, C4) holoAlpha(I, 255) 
+	
+                #combine fenceb
+		I++ holoCreate(I,M4:toWorld(vec(0.2, 0, 10.68)*Scale),vec(0.1, 0.08, 0.25)*Scale,M4:toWorld(ang(0, 0, 0)),vec(255, 255, 255),"models/props_combine/combine_fence01b.mdl") holoMaterial(I,"") holoParent(I, M4) holoAlpha(I, 255)
+	
+                #combine fencea
+		I++ holoCreate(I,M4:toWorld(vec(0.2, 0, 10.68)*Scale),vec(0.1, 0.08, 0.25)*Scale,M4:toWorld(ang(0, 0, 0)),vec(255, 255, 255),"models/props_combine/combine_fence01a.mdl") holoMaterial(I,"") holoParent(I, M4) holoAlpha(I, 255)
+	
+                #g
+		I++ holoCreate(I,M4:toWorld(vec(0, 0, 0.9)*Scale),vec(0.03, 0.02, 0.02)*Scale,M4:toWorld(ang(-0.0001, 90, 90)),vec(255, 255, 255),"models/mechanics/roboticslarge/g1.mdl") holoMaterial(I,"") holoParent(I, M4) holoAlpha(I, 255)
+
+  }
+
+
+#IK
+
+    function number icos(A,B,C){
+
+        return acos((A^2+B^2-C^2)/(2*A*B))
+    
+    }
+
+    function legCrete(A,B,C,D,E,Length1,Length2,Basis:entity,Pos:vector,Target:vector,Can){
+        
+        if(changed(Can) && Can){
+        
+            holoCreate(A)
+            holoParent(A,Basis)
+            holoPos(A,Pos)
+        
+            local K1 = holoCreate(B)
+            holoParent(B,A)
+            holoPos(B,Pos)   
+     
+            
+            local K2 = holoCreate(C)
+            holoParent(C,B)
+            holoPos(C,K1:toWorld(vec(Length1,0,0)))        
+        
+            holoCreate(D)
+            holoParent(D,K2)
+            holoPos(D,K2:toWorld(vec(Length2/2,0,0)))    
+            holoAng(D,K2:toWorld(ang(90,0,0)))
+            
+            holoCreate(E)
+            holoParent(E,K1)
+            holoPos(E,K1:toWorld(vec(Length1/2.7,0,4)))    
+            holoAng(E,K1:toWorld(ang(0,90,83)))
+            
+            holoModel(A,"models/holograms/hq_icosphere.mdl")
+            holoMaterial(A,"models/shiny")
+            holoColor(A,vec(72))
+            
+            holoModel(B,"models/holograms/hq_icosphere.mdl")
+            holoMaterial(B,"models/shiny")
+            holoColor(B,vec(72))
+            holoScale(B,vec(1.5))
+            
+            holoModel(C,"models/holograms/hq_icosphere.mdl")
+            holoMaterial(C,"models/shiny")
+            holoScale(C,vec(1.2))
+            holoColor(C,vec(72))
+            
+            holoModel(D,"models/props_combine/tprotato2.mdl")
+            holoMaterial(D,"models/shiny")
+            holoColor(D,vec(72))
+            holoScaleUnits(D,vec(30,30,Length2))
+             
+            holoModel(E,"models/Gibs/HGIBS_spine.mdl")
+            holoMaterial(E,"models/shiny")
+            holoColor(E,vec(72))
+            holoScaleUnits(E,vec(15,30,Length1))
+
+       }
+
+       local Dist = Pos:distance(Target)
+    
+       local AimAng = Basis:toLocal((Target - Pos):toAngle())
+    
+       holoAng(A,Basis:toWorld(ang(AimAng:pitch(),AimAng:yaw(),180)))
+    
+       holoAng(B,holoEntity(A):toWorld(ang(icos(Dist,Length1,Length2),0,0)))
+    
+       holoAng(C,holoEntity(B):toWorld(ang(icos(Length1,Length2,Dist)+180,0,0)))
+    
+    
+       }
+
+
+}
+
+#============Camera===========#   
+
+if(changed(CamLink)){
+
+CamLink["Activated",number] = 1 
+
+CamLink["Angle",angle] = E:toWorld(ang())
+
+CamLink["Position",vector] = E:toWorld(vec(0,0,250))
+
+CamLink["Parent",entity] = E
+
+}
+
+#=========RotorSpawner========#   
+
+if(clk("1")){
+
+    rotorCreate(0,E,vec(0,0,0),ang())
+    
+R1 = holoEntity(1)
+    
+S1 = holoEntity(6)
+
+S2 = holoEntity(14)
+
+S3 = holoEntity(22)
+
+S4 = holoEntity(30)
+
+}
+
+if(clk("2")){
+
+    rotorCreate(38,E,vec(0,0,5),ang())
+
+    soundPlay(1,100000,"vehicles/chopper_rotor2.wav")
+    
+R2 = holoEntity(39)   
+    
+S5 = holoEntity(44)
+
+S6 = holoEntity(52)
+
+S7 = holoEntity(60)
+
+S8 = holoEntity(68) 
+
+}
+
+#===========Ticks==========#
+
+interval(60)
+  
+#=========DataSuck=========#
+
+TorsoAngles = E:angles()
+
+Vel = E:vel()
+
+VelL = E:velL()
+
+AngVel = E:angVel() 
+
+local VeX = VelL:x()
+
+local VeY = VelL:y()
+
+local VeZ = VelL:z()
+
+if(VeX > 0){ VelX = VeX }else{ VelX = -VeX }
+
+if(VeY > 0){ VelY = VeY }else{ VelY = -VeY }
+
+if(VeZ > 0){ VelZ = VeZ }else{ VelZ = -VeZ }
+
+local Speed = VelX + VelY + VelZ
+
+#=========Sterring=========#
+
+local Driver = Chair:driver()
+
+local W = Driver:keyPressed("W")
+
+local S = Driver:keyPressed("S")
+
+local A = Driver:keyPressed("A")
+
+local D = Driver:keyPressed("D")
+
+local Space = Driver:keyJump() 
+
+local Shift = Driver:keySprint() 
+
+local R = Driver:keyPressed("R")
+
+if(changed(R) && R){
+    
+    Active++
+    
+    if(Active > 1){
+    
+    Active = 0
+    
+    Power = EnginePower
+    
+    }else{
+    
+    Power = 0
+    
+    }
+
+}
+
+local CA = CamLink["CamAng",angle]
+
+local CamAng = CA + ang(0,0,(D-A)*45)
+
+#==========Engine==========#
+
+if(Active){
+    
+    E:propGravity(1)
+    
+    if(Space){
+    
+    EyeAng = E:toLocal(ang(-VelL:x()/17,CamAng:yaw(),VelL:y()/17))
+    
+    }else{
+
+    EyeAng = E:toLocal(CamAng)
+
+    }
+    
+    if(Open > 0.09){
+    
+        Open = Open - Open/5
+    
+    }else{
+
+        Throttle = 45 * Active + W*50 - S*25
+
+    }
+    
+    ApplyForce = E:up() * EnginePower - Vel/20
+    
+    ApplyAngForce = EyeAng - AngVel
+
+}else{ 
+
+    E:propGravity(0)
+
+    EyeAng = E:toLocal(CA)
+
+    Throttle = 0
+
+    if(EnginePower <= 0){
+        
+        local WAng =  round(R1:toLocal(E:angles()):yaw()+45,0)
+
+        if(WAng != 0){
+            
+            Rot = Rot + WAng/5
+            
+        }else{
+
+        if(Open < 1){
+    
+            Open = Open + (0.1-Open/10)
+    
+        }
+        
+    }
+
+    }
+
+#==========Rangers=========#
+
+local VelLXY = VelL / 10
+
+local VX = VelLXY:x()
+
+local VY = VelLXY:y()
+
+local F1 = E:toWorld(vec(200+VX,-100+VY,0))
+
+local F2 = E:toWorld(vec(100+VX,-150+VY,0))
+ 
+local F3 = E:toWorld(vec(-100+VX,-150+VY,0))
+
+local F4 = E:toWorld(vec(-200+VX,-100+VY,0))
+
+local F5 = E:toWorld(vec(200+VX,100+VY,0))
+
+local F6 = E:toWorld(vec(100+VX,150+VY,0))
+
+local F7 = E:toWorld(vec(-100+VX,150+VY,0))
+
+local F8 = E:toWorld(vec(-200+VX,100+VY,0))
+
+local Up = E:up()
+
+local Ra1 = rangerOffset(-200,F1,Up) #1
+
+local Ra2 = rangerOffset(-200,F2,Up) #2
+
+local Ra3 = rangerOffset(-200,F3,Up) #1
+
+local Ra4 = rangerOffset(-200,F4,Up) #2
+
+local Ra5 = rangerOffset(-200,F5,Up) #2
+
+local Ra6 = rangerOffset(-200,F6,Up) #1
+
+local Ra7 = rangerOffset(-200,F7,Up) #2
+
+local Ra8 = rangerOffset(-200,F8,Up) #1
+
+local Ra1D = Ra1:distance()
+
+local Ra2D = Ra2:distance() 
+
+local Ra3D = Ra3:distance()
+
+local Ra4D = Ra4:distance()
+
+local Ra5D = Ra5:distance()
+
+local Ra6D = Ra6:distance()
+
+local Ra7D = Ra7:distance()
+
+local Ra8D = Ra8:distance()
+
+local FromGround = (Ra1D + Ra2D + Ra3D + Ra4D + Ra5D + Ra6D + Ra7D + Ra8D)/8
+
+local Ra1P = Ra1:pos()
+
+local Ra2P = Ra2:pos()
+
+local Ra3P = Ra3:pos()
+
+local Ra4P = Ra4:pos()
+
+local Ra5P = Ra5:pos()
+
+local Ra6P = Ra6:pos()
+
+local Ra7P = Ra7:pos()
+
+local Ra8P = Ra8:pos()
+
+#LegsMove
+
+if(!Switch){
+    
+    if(round(Speed,0)){
+        
+        Switch = 1
+        
+    }
+    
+}elseif(changed(Switch)){
+    
+    Snd++
+    
+    local SoundHolo = holoCreate(Snd)
+    
+    holoParent(Snd,E)
+    
+    holoAlpha(Snd,0)
+    
+    holoDelete(Snd-20)
+    
+    SoundHolo:soundPlay(Snd,100,"npc/dog/dog_footstep_run4.wav")
+    
+    soundPitch(Snd,Speed/2)
+  
+}
+
+
+local SwitchSpeed = Speed / 2000 +0.1
+
+if(Switch == 1){
+    
+    if(N2 < 1){
+        
+        N2 = N2 + SwitchSpeed 
+        
+    }else{    
+        
+        LP2 = Ra2P
+        
+        LP4 = Ra4P
+        
+        LP5 = Ra5P
+        
+        LP7 = Ra7P
+    
+        Switch = 2 
+        
+        N2 = 0
+    
+    }  
+    
+    Bez2= bezier(LP2,F2,Ra2P,N2)
+    
+    Bez4 = bezier(LP4,F4,Ra4P,N2)
+    
+    Bez5 = bezier(LP5,F5,Ra5P,N2)
+    
+    Bez7 = bezier(LP7,F7,Ra7P,N2)
+    
+}
+
+if(Switch == 2){
+
+    if(N1 < 1){
+        
+        N1 = N1 + SwitchSpeed
+        
+    }else{
+    
+        LP1 = Ra1P
+        
+        LP3 = Ra3P
+        
+        LP6 = Ra6P
+        
+        LP8 = Ra8P
+    
+        Switch = 0 
+        
+        N1 = 0 
+    
+    }
+    
+    Bez1 = bezier(LP1,F1,Ra1P,N1)
+    
+    Bez3 = bezier(LP3,F3,Ra3P,N1)
+    
+    Bez6 = bezier(LP6,F6,Ra6P,N1)
+    
+    Bez8 = bezier(LP8,F8,Ra8P,N1)
+
+}
+
+#Ang
+
+if(FromGround < 200){
+
+    ApplyForce = (E:forward() * (W - S) * 500 + E:right() * (D - A) * 500 + E:up() * ( 100 - FromGround ) * 10 ) - Vel
+    
+    local Pitch = (Ra1D + Ra2D + Ra5D + Ra6D) - (Ra3D + Ra4D + Ra7D + Ra8D)
+    
+    local Roll = (Ra1D + Ra2D + Ra3D + Ra4D) - (Ra5D + Ra6D + Ra7D + Ra8D)
+    
+    ApplyAngForce = ang(Pitch,0,Roll) + EyeAng * 15 - AngVel * 3 
+    
+}else{
+
+    ApplyForce = vec()
+    
+    ApplyAngForce = ang()
+
+}
+
+}
+
+if(changed(Active) && Active){
+    
+    Bez1 = Bez2 = Bez3 = Bez4 = Bez5 = Bez6 = Bez7 = Bez8 = E:toWorld(vec(-1000,0,-50))   
+        
+}
+        
+
+if(changed(Active) && !Active){
+    
+    Functioning = 1           
+    
+}
+
+if(Functioning){
+     
+    legCrete(76,77,78,79,80,100,100,E,E:toWorld(vec(50,-15,-15)),Bez1,clk("3"))
+
+    legCrete(81,82,83,84,85,100,100,E,E:toWorld(vec(25,-15,-15)),Bez2,clk("4"))
+    
+    legCrete(86,87,88,89,90,100,100,E,E:toWorld(vec(-25,-15,-15)),Bez3,clk("5"))
+    
+    legCrete(91,92,93,94,95,100,100,E,E:toWorld(vec(-50,-15,-15)),Bez4,clk("6"))
+    
+    legCrete(96,97,98,99,100,100,100,E,E:toWorld(vec(50,15,-15)),Bez5,clk("7"))
+    
+    legCrete(101,102,103,104,105,100,100,E,E:toWorld(vec(25,15,-15)),Bez6,clk("8"))
+    
+    legCrete(106,107,108,109,110,100,100,E,E:toWorld(vec(-25,15,-15)),Bez7,clk("9"))
+    
+    legCrete(111,112,113,114,115,100,100,E,E:toWorld(vec(-50,15,-15)),Bez8,clk("10"))
+    
+    if(Active){
+        
+        Functioning = 0
+        
+    }
+    
+}
+
+
+if(EnginePower < Throttle){
+    
+    EnginePower = EnginePower + Throttle/25
+    
+}
+
+if(EnginePower > Throttle){
+    
+    EnginePower = EnginePower - (Throttle + Power)/25
+    
+}
+
+local EffPower = EnginePower * 2
+
+Rot = Rot + EffPower
+
+holoAng(1,E:toWorld(ang(0,Rot,0)))
+
+holoAng(39,E:toWorld(ang(0,-Rot+90,0)))
+
+soundPitch(1,EffPower*1.2)
+
+#=========Forces==========#
+
+E:applyAngForce(ApplyAngForce * Mass)
+
+E:applyForce(ApplyForce * Mass)
+
+if(changed(Open)){
+
+local SwashPitch = 90 * Open
+
+local A1 = 90 - 120 * Open
+
+local A2 = 180 + 120 * Open
+
+local A3 = 0 - 45 * Open
+
+local A4 = -90 + 45 * Open
+
+holoAng(6,R1:toWorld(ang(0,A1,0)))
+
+holoAng(14,R1:toWorld(ang(0,A2,0)))
+
+holoAng(22,R1:toWorld(ang(0,A3,0)))
+
+holoAng(30,R1:toWorld(ang(0,A4,0)))
+
+holoAng(44,R2:toWorld(ang(0,A1,0)))
+
+holoAng(52,R2:toWorld(ang(0,A2,0)))
+
+holoAng(60,R2:toWorld(ang(0,A3,0)))
+
+holoAng(68,R2:toWorld(ang(0,A4,0)))
+
+holoAng(10,S1:toWorld(ang(90+SwashPitch, -90, 90)))
+
+holoAng(18,S2:toWorld(ang(90-SwashPitch, -90, 90)))
+
+holoAng(26,S3:toWorld(ang(90+SwashPitch, -90, 90)))
+
+holoAng(34,S4:toWorld(ang(90-SwashPitch, -90, 90)))
+
+holoAng(48,S5:toWorld(ang(90+SwashPitch, -90, 90)))
+
+holoAng(56,S6:toWorld(ang(90-SwashPitch, -90, 90)))
+
+holoAng(64,S7:toWorld(ang(90+SwashPitch, -90, 90)))
+
+holoAng(72,S8:toWorld(ang(90-SwashPitch, -90, 90)))
+
+}
+
+if(clk("11")){
+    
+    I = 115
+                #deflaut
+		I++ local Base = holoCreate(I,E:toWorld(vec(-100,0,0)),vec(2),E:toWorld(ang(0, 0, 0)),vec(255, 255, 255),"models/holograms/hq_sphere.mdl") holoMaterial(I,"") holoParent(I, E) holoAlpha(I, 255)
+
+  local X = 90
+
+  local Z = -10
+  
+                #combine scanner
+		I++ holoCreate(I,Base:toWorld(vec(24.4424-X, 0, 7.3711+Z)),vec(4.7, 1.6, 2.2),Base:toWorld(ang(0, 0, 0)),vec(255, 255, 255),"models/combine_scanner.mdl") holoMaterial(I,"") holoParent(I, Base) holoAlpha(I, 255)
+	
+                #tprotato
+		I++ holoCreate(I,Base:toWorld(vec(-X, 0, 29+Z)),vec(1, 0.4, 1.6),Base:toWorld(ang(-90, 0, 0)),vec(255, 255, 255),"models/props_combine/tprotato2.mdl") holoMaterial(I,"") holoParent(I, Base) holoAlpha(I, 255)
+	
+                #breenlight
+		I++ holoCreate(I,Base:toWorld(vec(-34.7-X, 0, Z)),vec(6.8, 6.8, 6.8),Base:toWorld(ang(90, 0, -180)),vec(255, 255, 255),"models/props_combine/breenlight.mdl") holoMaterial(I,"") holoParent(I, Base) holoAlpha(I, 255)
+	
+                #tprotato (1)
+		I++ holoCreate(I,Base:toWorld(vec(0-X, 0, Z)),vec(1, 0.4, 1),Base:toWorld(ang(-90, 0, 0)),vec(255, 255, 255),"models/props_combine/tprotato1.mdl") holoMaterial(I,"") holoParent(I, Base) holoAlpha(I, 255)
+	
+                #breenlight (1)
+		I++ holoCreate(I,Base:toWorld(vec(10-X, 0, Z)),vec(6.8, 6.8, 6.8),Base:toWorld(ang(90, 0, 0)),vec(255, 255, 255),"models/props_combine/breenlight.mdl") holoMaterial(I,"") holoParent(I, Base) holoAlpha(I, 255)
+    
+}
+
+if(clk("12")){
+    
+    I = 121
+    
+    local Base = E
+    
+                #eli pod inner
+		I++ holoCreate(I,Base:toWorld(vec(58.8114, 0, -12.1992)),vec(2, 2, 2),Base:toWorld(ang(90, 0, -180)),vec(255, 255, 255),"models/props_combine/eli_pod_inner.mdl") holoMaterial(I,"") holoParent(I, Base) holoAlpha(I, 255)
+	
+                #light spotlight lamp
+		I++ holoCreate(I,Base:toWorld(vec(-73.788, 0, -3.1611)),vec(2.6, 0.7, 0.7),Base:toWorld(ang(0, 180, 0)),vec(255, 255, 255),"models/props_wasteland/light_spotlight01_lamp.mdl") holoMaterial(I,"") holoParent(I, Base) holoAlpha(I, 255)
+	
+                #bomb debris 
+		I++ holoCreate(I,Base:toWorld(vec(0.327, 0, 8.9648)),vec(4.4225, 2.2875, 2.135),Base:toWorld(ang(-1.0759, -180, -180)),vec(255, 255, 255),"models/combine_helicopter/bomb_debris_2.mdl") holoMaterial(I,"") holoParent(I, Base) holoAlpha(I, 255)
+	
+                #eli pod inner (1)
+		I++ holoCreate(I,Base:toWorld(vec(67.5595, 0, -12.1992)),vec(2, 2, 2),Base:toWorld(ang(90, 0, -180)),vec(255, 255, 255),"models/props_combine/eli_pod_inner.mdl") holoMaterial(I,"") holoParent(I, Base) holoAlpha(I, 255)
+	
+                #combine scanner
+		I++ holoCreate(I,Base:toWorld(vec(-65.4748, 0, -9.5303)),vec(1.9, 1.9, 1.3),Base:toWorld(ang(0, 0, 180)),vec(255, 255, 255),"models/combine_scanner.mdl") holoMaterial(I,"") holoParent(I, Base) holoAlpha(I, 255)
+	
+                #tprotato
+		I++ holoCreate(I,Base:toWorld(vec(1.6458, 0, 13.6641)),vec(0.5, 1.3, 0.6),Base:toWorld(ang(-84.5601, 0, 0)),vec(255, 255, 255),"models/props_combine/tprotato1.mdl") holoMaterial(I,"") holoParent(I, Base) holoAlpha(I, 255)
+	
+                #hq rcylinder thin
+		I++ holoCreate(I,Base:toWorld(vec(0, 0, 24.0332)),vec(1, 1, 2.2),Base:toWorld(ang(0, 0, 0)),vec(255, 255, 255),"models/holograms/hq_rcylinder_thin.mdl") holoMaterial(I,"") holoParent(I, Base) holoAlpha(I, 255)
+	
+                #combine fencea
+		I++ holoCreate(I,Base:toWorld(vec(-58.7481, -0.0001, 0)),vec(1, 1.7, 0.3),Base:toWorld(ang(64, 90, -90)),vec(255, 255, 255),"models/props_combine/combine_fence01a.mdl") holoMaterial(I,"") holoParent(I, Base) holoAlpha(I, 255)
+	
+                #headcrabcannistera
+		I++ holoCreate(I,Base:toWorld(vec(-0.0005, -18.9971, 23.7979)),vec(0.5, 0.5, 0.5),Base:toWorld(ang(0, 0, 0)),vec(255, 255, 255),"models/props_combine/headcrabcannister01a.mdl") holoMaterial(I,"") holoParent(I, Base) holoAlpha(I, 255)
+	
+                #tprotato (1)
+		I++ holoCreate(I,Base:toWorld(vec(12.3156, 0, 21.5527)),vec(0.6, 0.7, 0.4),Base:toWorld(ang(-67.041, 0, 0)),vec(255, 255, 255),"models/props_combine/tprotato2.mdl") holoMaterial(I,"") holoParent(I, Base) holoAlpha(I, 255)
+	
+                #breenlight
+		I++ holoCreate(I,Base:toWorld(vec(-9.3681, 0, 19.1445)),vec(4.1, 4.1, 4.1),Base:toWorld(ang(-90, 0, 0)),vec(255, 255, 255),"models/props_combine/breenlight.mdl") holoMaterial(I,"") holoParent(I, Base) holoAlpha(I, 255)
+	
+                #combine fenceb
+		I++ holoCreate(I,Base:toWorld(vec(-58.7481, -0.0001, 0)),vec(1, 1.7, 0.3),Base:toWorld(ang(109, 90, -90)),vec(255, 255, 255),"models/props_combine/combine_fence01b.mdl") holoMaterial(I,"") holoParent(I, Base) holoAlpha(I, 255)
+	
+                #breenlight (1)
+		I++ holoCreate(I,Base:toWorld(vec(35.2808, 0, 13.417)),vec(4.1, 4.1, 1.4),Base:toWorld(ang(-56.0092, 0, 180)),vec(255, 255, 255),"models/props_combine/breenlight.mdl") holoMaterial(I,"") holoParent(I, Base) holoAlpha(I, 255)
+	
+                #signpole
+		I++ holoCreate(I,Base:toWorld(vec(-49.8, 0, 21.4)),vec(1, 1, 0.4),Base:toWorld(ang(-112.655, 0, 0)),vec(255, 255, 255),"models/props_c17/signpole001.mdl") holoMaterial(I,"") holoParent(I, Base) holoAlpha(I, 255)
+	
+                #headcrabcannistera (1)
+		I++ holoCreate(I,Base:toWorld(vec(-0.0005, 18.997, 23.7979)),vec(0.5, 0.5, 0.5),Base:toWorld(ang(0, 0, 0)),vec(255, 255, 255),"models/props_combine/headcrabcannister01a.mdl") holoMaterial(I,"") holoParent(I, Base) holoAlpha(I, 255)
+
+              #default
+		I++ holoCreate(I,Base:toWorld(vec(53.802, 0, 0)),vec(1.8, 1.8, 1.8),Base:toWorld(ang(0, 0, 0)),vec(255, 255, 255),"models/pac/default.mdl") holoMaterial(I,"") holoParent(I, Base) holoAlpha(I, 255)
+    
+}
+
+if(clk("13")){
+    
+    Base = holoEntity(137)
+    
+    I = 137
+    
+                #headcrabcannistera
+		I++ holoCreate(I,Base:toWorld(vec(19.8318, 0, 0)),vec(0.4, 0.6, 0.6),Base:toWorld(ang(0, 0, 0)),vec(255, 255, 255),"models/props_combine/headcrabcannister01a.mdl") holoMaterial(I,"") holoParent(I, Base) holoAlpha(I, 255)
+	
+                #bomb debris 
+		I++ holoCreate(I,Base:toWorld(vec(37.0388, 0, -7.3643)),vec(2.2, 1.6, 2.2),Base:toWorld(ang(-8.2817, -180, -180)),vec(255, 255, 255),"models/combine_helicopter/bomb_debris_2.mdl") holoMaterial(I,"") holoParent(I, Base) holoAlpha(I, 255)
+	
+                #tprotato
+		I++ holoCreate(I,Base:toWorld(vec(17.0156, -11.7854, 5.5596)),vec(0.3, 0.3, 0.3),Base:toWorld(ang(-35, -90, -90)),vec(255, 255, 255),"models/props_combine/tprotato2.mdl") holoMaterial(I,"") holoParent(I, Base) holoAlpha(I, 255)
+	
+                #helicopter bomb
+		I++ holoCreate(I,Base:toWorld(vec(12.2553, 0, 1.6865)),vec(0.9, 0.9, 0.9),Base:toWorld(ang(0, 0, 0)),vec(255, 255, 255),"models/Combine_Helicopter/helicopter_bomb01.mdl") holoMaterial(I,"") holoParent(I, Base) holoAlpha(I, 255)
+	
+                #tprotato (1)
+		I++ holoCreate(I,Base:toWorld(vec(17.0156, 11.785, 5.5596)),vec(0.3, 0.3, 0.3),Base:toWorld(ang(215, -90, -90)),vec(255, 255, 255),"models/props_combine/tprotato2.mdl") holoMaterial(I,"") holoParent(I, Base) holoAlpha(I, 255)
+	
+                #tprotato (2)
+		I++ holoCreate(I,Base:toWorld(vec(28.189, 0, 5.7197)),vec(0.4, 0.3, 0.4),Base:toWorld(ang(-82.1081, 0, -180)),vec(255, 255, 255),"models/props_combine/tprotato2.mdl") holoMaterial(I,"") holoParent(I, Base) holoAlpha(I, 255)
+
+local N = 0
+
+while(N < 143 && perf()){
+    
+    N++
+    
+    holoMaterial(N,"phoenix_storms/FuturisticTrackRamp_1-2")
+    
+    holoColor(N,vec(150))
+    
+}	
+    
+
+}
+
