@@ -1,4 +1,4 @@
-@name Rupture
+@name Spaceship core
 
 @inputs Pilot_chair:entity Camera_wirelink:wirelink Ship:entity
 
@@ -7,6 +7,8 @@
 @persist Ship_mass
 
 @persist Key_Forward Key_Backward Key_Right Key_Left Key_Up Key_Down Key_Speed #Keys
+
+@model models/hunter/plates/plate1x1.mdl
 
 # Ship = basic prop ;P
 
@@ -21,6 +23,8 @@ if( first() | dupefinished() )
 {
     
     #==========MajorSets==========#
+    
+      if( !Ship:isValid() ){ Ship = entity() }
      
       Ship_mass = Ship:mass()
     
@@ -186,20 +190,3 @@ if( changed( Key_Forward ) && Key_Forward )
     soundPitch( 1 , VelL_x / 25 )
     
     Color = vec( 29 , 0 , 255 ) * VelL_x / 100
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
