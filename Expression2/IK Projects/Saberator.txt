@@ -1,21 +1,22 @@
 @name Saberator
 @inputs CamLink:wirelink 
-@outputs 
 @persist [E Chair]:entity Mass 
 @persist Throttle EnginePower Power Rot
-@persist Active Open EyeAng:angle Functioning
+@persist Active Open EyeAng:angle Functioning 
 @persist [S1 S2 S3 S4 S5 S6 S7 S8 R1 R2]:entity
 @persist ApplyForce:vector ApplyAngForce:angle
 @persist Switch N1 N2 Snd
-@persist [LP1 LP2 LP3 LP4 LP5 LP6 LP7 LP8 Mid Bez1 Bez2 Bez3 Bez4 Bez5 Bez6 Bez7 Bez8]:vector
+@persist [LP1 LP2 LP3 LP4 LP5 LP6 LP7 LP8 Mid Bez1 Bez2 Bez3 Bez4 Bez5 Bez6 Bez7 Bez8 ]:vector
 @persist VelX VelY VelZ 
+@inputs [ Turret_1 Turret_2 ]:entity
+@outputs Fire_L Fire_R
 @model models/hunter/plates/plate1x1.mdl 
 
 if(duped()){reset()}
 
 if(first()|dupefinished()){
  
-#Worst code I've ever done / Old code
+#Worst code I've ever done
     
 #==========MainSets===========#   
 
@@ -176,6 +177,42 @@ if(first()|dupefinished()){
 
   }
 
+#Aim_______________________________________________________________________________________________________________________________________#
+    
+    function angle aim_angle( Turret:entity , Target_pos:vector )
+    {
+        
+        return Turret:toLocal( ( Target_pos - Turret:pos() ):toAngle() ) / 2
+        
+    }
+    
+#turret_______________________________________________________________________________________________________________________________________#
+
+    function turret( Base:entity , Pos:vector , Holo_index , Target_pos:vector , Can )
+    {
+        
+        if( changed( Can ) && Can )
+        {
+            
+            holoCreate( Holo_index ) 
+            
+            holoParent( Holo_index , Base )
+            
+            holoPos( Holo_index , Base:toWorld( Pos ) )
+            
+            holoModel( Holo_index , "models/maxofs2d/camera.mdl" )
+            
+        }
+    
+        local Turret = holoEntity( Holo_index )
+
+        local Aim = aim_angle( Turret , Target_pos )
+    
+        holoAng( Holo_index , Turret:toWorld( Aim ) )
+
+    }
+    
+
 
 #IK
 
@@ -251,8 +288,39 @@ if(first()|dupefinished()){
     
        }
 
+       timer( "Turret1" , 1 )
+    
+       timer( "Turret2" , 2 )
 
 }
+
+if( changed( Turret_1 ) | changed( Turret_2 ) )
+{
+    
+    local T1_Base = holoEntity( 10001 )
+    
+    local T2_Base = holoEntity( 10002 )
+    
+    Turret_1:setPos( T1_Base:toWorld( vec() ) )
+    
+    Turret_1:setAng( T1_Base:toWorld( ang() ) )
+    
+    Turret_2:setPos( T2_Base:toWorld( vec() ) )
+    
+    Turret_2:setAng( T2_Base:toWorld( ang() ) )
+    
+    timer( "Turret_parrent" , 2000 )
+    
+}
+
+    if( clk( "Turret_parrent" ) )
+    {
+        
+        Turret_1:parentTo( holoEntity( 10001 ) )
+        
+        Turret_2:parentTo( holoEntity( 10002 ) )
+        
+    }
 
 #============Camera===========#   
 
@@ -350,6 +418,10 @@ local Shift = Driver:keySprint()
 
 local R = Driver:keyPressed("R")
 
+Fire_L = Driver:keyAttack1()
+
+Fire_R = Driver:keyAttack2()
+
 if(changed(R) && R){
     
     Active++
@@ -367,6 +439,8 @@ if(changed(R) && R){
     }
 
 }
+
+local Cam_HitPos = CamLink["HitPos",vector]
 
 local CA = CamLink["CamAng",angle]
 
@@ -661,6 +735,10 @@ if(Functioning){
     }
     
 }
+
+turret( E , vec( 0 , 65 , 0 ) , 10001 , Cam_HitPos , clk("Turret1") )
+
+turret( E , vec( 0 , -65 , 0 ) , 10002 , Cam_HitPos , clk("Turret2") )
 
 
 if(EnginePower < Throttle){
