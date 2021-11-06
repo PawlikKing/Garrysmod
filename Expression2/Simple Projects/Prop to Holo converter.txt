@@ -27,7 +27,7 @@ if( first() | dupefinished() )
     
     printColor( "Seeker_distance: " , vec( 100 , 0 , 255 ) , Seeker_distance:toString() )
     
-    printColor( "HoloSpawnTime: " , vec( 100 , 0 , 255 ) , Holo_spawnTime:toString() )
+    printColor( "HoloSpawnTimer: " , vec( 100 , 0 , 255 ) , Holo_spawnTime:toString() )
     
     printColor("========Commands========" , "
     
@@ -75,7 +75,7 @@ if( changed( lastSaidWhen() ) && lastSpoke() == Owner )
             
             Seeker_distance = LS[ 2 , string ]:toNumber()
             
-            printColor("New seek distance: ", vec(100 , 0 , 255) , Seeker_distance )
+            printColor("New search distance: ", vec(100 , 0 , 255) , Seeker_distance )
             
         }
         
@@ -86,7 +86,7 @@ if( changed( lastSaidWhen() ) && lastSpoke() == Owner )
             
             Holo_spawnTime = LS[ 2 , string ]:toNumber()
             
-            printColor("New spawn time: ", vec(100 , 0 , 255) , Holo_spawnTime )
+            printColor("New spawn delay: ", vec(100 , 0 , 255) , Holo_spawnTime )
             
         }        
         
