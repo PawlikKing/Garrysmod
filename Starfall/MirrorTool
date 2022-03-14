@@ -1,0 +1,123 @@
+--@name Mirror
+--@author Pawik
+
+if SERVER then
+
+    owner = owner()
+    plane = chip()
+    not_spawned = {}
+    props = {}
+    mirrored = {}
+    lock = false
+    
+    function pushInto( Table, Any ) 
+    
+        local postition = table.count( Table ) + 1
+        table.insert( Table, postition, Any )
+      
+    end
+    
+    timer.create( "PropSpawn", 0.5, 1, function() 
+    
+        if !prop.canSpawn() then 
+            timer.start( "PropSpawn" ) return end   
+    
+    end)
+
+    hook.add( "OnEntityCreated", "Add", function( spawned )
+    
+        if !spawned:isValid() then return end
+    
+        local creator = spawned:getOwner()
+        if owner != creator || lock then return end
+        
+        spawned:enableMotion( false )
+        
+        if !prop.canSpawn() then
+
+            pushInto( not_spawned, spawned ) 
+            timer.start( "PropSpawn" ) 
+            return end
+            
+        local position = plane:worldToLocal(spawned:getPos())
+        local x = position.x
+        local y = position.y
+        local z = position.z
+        local mirrored_position = plane:localToWorld( Vector( x, -y, z ) )  
+        
+        local angular = plane:worldToLocalAngles(spawned:getAngles())
+        local pi = angular.pitch
+        local ya = angular.yaw
+        local ro = angular.roll
+        local mirrored_angle = plane:localToWorldAngles( Angle( pi, -ya, -ro ) )  
+        
+        local model = spawned:getModel()
+        
+        local mirrored_prop = prop.create( mirrored_position, mirrored_angle, model, true)
+            
+        pushInto( props, spawned ) 
+        pushInto( mirrored, mirrored_prop )
+        
+        lock = true
+        timer.create( "unlock", 0, 1, function() lock = false end)
+    
+    end)
+    
+    hook.add( "EntityRemoved", "Delete", function( deleted )
+    
+        if !deleted:isValid() then return end
+        local deleter = deleted:getOwner()
+        if owner != deleter || lock then return end 
+        
+        local Index = table.keyFromValue( props , deleted )
+        table.remove( props, Index )
+        mirrored[Index]:remove()
+        table.remove( mirrored, Index )
+        
+        lock = true
+        timer.create( "unlock", 0, 1, function() lock = false end)
+    
+    end)
+    
+    hook.add( "PhysgunPickup", "hold", function( ply, ent ) 
+    
+        if ply == owner && !ent:isValid() then return end
+        
+        local Index = table.keyFromValue( props , ent )
+        local mirrored_prop = mirrored[Index]
+        
+        if mirrored_prop == nil then return end
+        
+        ent:setNocollideAll(true)
+        mirrored_prop:setNocollideAll(true)
+        
+        hook.add( "think", "mirror", function() 
+            
+            local position = plane:worldToLocal(ent:getPos())
+            local x = position.x
+            local y = position.y
+            local z = position.z
+            local mirrored_position = plane:localToWorld( Vector( x, -y, z ) ) 
+            mirrored_prop:setPos( mirrored_position ) 
+            
+            local angular = plane:worldToLocalAngles(ent:getAngles())
+            local pi = angular.pitch
+            local ya = angular.yaw
+            local ro = angular.roll
+            local mirrored_angle = plane:localToWorldAngles( Angle( pi, -ya, -ro ) )   
+            mirrored_prop:setAngles( mirrored_angle )
+                       
+            
+        end)
+    
+    end)
+    
+    hook.add( "PhysgunDrop", "dropdown", function( ply, ent ) 
+        
+        if !ent:isValid() || ent:getOwner() != owner then return end
+        ent:enableMotion( false )
+        hook.remove("think", "mirror")
+    
+    end)
+
+end
