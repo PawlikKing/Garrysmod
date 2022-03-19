@@ -32,6 +32,7 @@ if SERVER then
         if owner != creator || lock then return end
         
         spawned:enableMotion( false )
+        spawned:setUnbreakable( true )
         
         if !prop.canSpawn() then
 
@@ -54,6 +55,8 @@ if SERVER then
         local model = spawned:getModel()
         
         local mirrored_prop = prop.create( mirrored_position, mirrored_angle, model, true)
+        
+        mirrored_prop:setUnbreakable( true )
             
         pushInto( props, spawned ) 
         pushInto( mirrored, mirrored_prop )
@@ -70,8 +73,13 @@ if SERVER then
         if owner != deleter || lock then return end 
         
         local Index = table.keyFromValue( props , deleted )
-        table.remove( props, Index )
+        if Index == nil then 
+            Index = table.keyFromValue( mirrored , deleted )
+        end
+        
         mirrored[Index]:remove()
+        props[Index]:remove()
+        table.remove( props, Index )
         table.remove( mirrored, Index )
         
         lock = true
@@ -84,10 +92,9 @@ if SERVER then
         if ply == owner && !ent:isValid() then return end
         
         local Index = table.keyFromValue( props , ent )
+        if Index == nil then return end
         local mirrored_prop = mirrored[Index]
-        
-        if mirrored_prop == nil then return end
-        
+
         ent:setNocollideAll(true)
         mirrored_prop:setNocollideAll(true)
         
@@ -117,6 +124,24 @@ if SERVER then
         if !ent:isValid() || ent:getOwner() != owner then return end
         ent:enableMotion( false )
         hook.remove("think", "mirror")
+        
+        local Index = table.keyFromValue( mirrored , ent )
+        if Index == nil then return end
+        local mirrored_prop = props[Index]
+        
+            local position = plane:worldToLocal(mirrored_prop:getPos())
+            local x = position.x
+            local y = position.y
+            local z = position.z
+            local mirrored_position = plane:localToWorld( Vector( x, -y, z ) ) 
+            ent:setPos( mirrored_position ) 
+            
+            local angular = plane:worldToLocalAngles(mirrored_prop:getAngles())
+            local pi = angular.pitch
+            local ya = angular.yaw
+            local ro = angular.roll
+            local mirrored_angle = plane:localToWorldAngles( Angle( pi, -ya, -ro ) )   
+            ent:setAngles( mirrored_angle )  
     
     end)
 
