@@ -1,5 +1,5 @@
 @name Initiator
-@persist Blueprint:string [Scanner TechEnt ClonEnt Owner]:entity Scan_r Objects:table Indexer
+@persist Blueprint:string [Scanner TechEnt ClonEnt Owner]:entity Scan_r Objects:table Indexer Parent_index
 @model models/maxofs2d/hover_classic.mdl
 
 #[
@@ -12,7 +12,7 @@
       /set base        - determines the base location of the scanner by owner currently aimed entity        
       /set clone       - determines e2 chip where the new code will be pasted by owner currently aimed entity                 
       /set r [number]  - determines the radius of the scanning grid             
-      /scan            - performs the process
+      /clone            - performs the process
 ]#
 
 if( first() | dupefinished() )
@@ -85,7 +85,7 @@ if( chatClk(Owner) )
             
         }
         
-        if( Synt == "/scan" )
+        if( Synt == "/clone" )
         { 
 
             Blueprint=
@@ -137,20 +137,17 @@ if( clk("blueprintCreate") )
     {
         
         local Object = Objects[Indexer,entity]
-        
         local Parent_F = Object:parent()
-        local Parent_index = 0
+        local Await = 0
         while( Parent_index < Q )
         {
-            if( !perf() ){ Parent_index=-1 break }
+            if( !perf() ){ Await=1 break }
             Parent_index++
             local Object = Objects[Parent_index,entity]
             if( Object == Parent_F ){ break }
         }
-        if( Parent_index==-1 )
-        {
-             break
-        }
+        if( Await )
+        {break}
         else 
         {
             local Index    = Indexer:toString()
@@ -175,9 +172,9 @@ if( clk("blueprintCreate") )
             
             local DataBlock = "        table( "+Index+", "+Parent+", "+STR_Position+", "+STR_Angle+", "+STR_Scale+", "+STR_Model+", "+STR_Material+", "+STR_Color4+" )"+Ct
             Blueprint = Blueprint + DataBlock
+            Parent_index = 0
         }
     }
-
     if( Indexer < Q ){ timer( "blueprintCreate", 60 ) }
     else
     { 
