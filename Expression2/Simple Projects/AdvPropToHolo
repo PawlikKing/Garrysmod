@@ -208,10 +208,17 @@ if( clk(\"assemble\") )
         {
             HoloData = Blueprint[I,table]
             local Index    = HoloData[1,number]
-            local Parent = HoloData[2,entity]
-            local Scale  = HoloData[5,vector]   
+            local Parent = HoloData[2,number]
+            local Scale  = HoloData[5,vector]
             holoScaleUnits(Index,Scale)
-            holoParent(Index,Parent)
+            if( Parent )
+            {
+                holoParent(Index,Parent)
+            }
+            else
+            {
+                holoParent(Index,HoloData[2,entity])
+            }
         }  
     }
 }"
