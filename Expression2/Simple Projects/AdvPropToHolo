@@ -91,7 +91,7 @@ if( chatClk(Owner) )
             Blueprint=
 
 "@name Blueprint
-@persist Blueprint:table Base:entity I
+@persist Blueprint:table Base:entity I PI
 
 if(first()|dupefinished())
 {
@@ -138,13 +138,13 @@ if( clk("blueprintCreate") )
         
         local Object = Objects[Indexer,entity]
         local Parent_F = Object:parent()
-        local Await = 0
-        while( Parent_index < Q )
+        local Await = 1
+        while( Parent_index < Q && perf() )
         {
-            if( !perf() ){ Await=1 break }
             Parent_index++
             local Object = Objects[Parent_index,entity]
             if( Object == Parent_F ){ break }
+            Await=0
         }
         if( Await )
         {break}
@@ -201,9 +201,10 @@ if( clk(\"assemble\") )
     { timer( \"assemble\", 250 ) }
     else
     {
-        for( I=1, Q, 1 )
+        while( PI < Q && perf() )
         {
-            HoloData = Blueprint[I,table]
+            PI++
+            HoloData = Blueprint[PI,table]
             local Index    = HoloData[1,number]
             local Parent = HoloData[2,number]
             local Scale  = HoloData[5,vector]
@@ -216,10 +217,10 @@ if( clk(\"assemble\") )
             {
                 holoParent(Index,HoloData[2,entity])
             }
-        }  
+        }
+        if( PI < Q ){ timer( \"assemble\", 250 ) } 
     }
 }"
-        fileWrite("Blueprints/Blueprint.txt",Blueprint)
         ClonEnt:remoteSetCode(Blueprint)
     }
 }
