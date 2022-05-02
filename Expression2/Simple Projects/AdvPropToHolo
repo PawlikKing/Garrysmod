@@ -97,9 +97,11 @@ if(first()|dupefinished())
 {
     Base = entity()
     Blueprint = table("+STR_cut
-            findExcludeEntities(array(Scanner,holoEntity(0),holoEntity(1)))
+            local From = TechEnt:pos()
+            findExcludeEntities(array(Scanner,holoEntity(0),holoEntity(1),holoEntity(2)))
             findExcludeModel("models/error.mdl")
-            findInSphere(TechEnt:pos(),Scan_r)
+            findInSphere(From,Scan_r)
+            findSortByDistance(From)
             #findSortByDistance(TechEnt:pos())
             Objects=findToTable()
             timer( "blueprintCreate", 1 )
@@ -143,9 +145,9 @@ if( clk("blueprintCreate") )
         {
             Parent_index++
             local Object = Objects[Parent_index,entity]
-            if( Object == Parent_F ){ break }
-            Await=0
+            if( Object == Parent_F ){ Await=0 break }
         }
+        if( Parent_index >= Q ){ Await=0 }
         if( Await )
         {break}
         else 
