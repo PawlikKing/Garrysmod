@@ -1,5 +1,5 @@
 @name Initiator
-@persist Blueprint:string [Scanner TechEnt ClonEnt Owner]:entity Scan_r Objects:table Indexer Parent_index
+@persist Blueprint:string [Scanner TechEnt ClonEnt Owner]:entity Scan_r [Objects ParentCache IndexesCache BlueprintCache]:table ParentCache_Q Objects_Q CacheMaker CacheLine Indexer Parent_index
 @model models/maxofs2d/hover_classic.mdl
 
 #[
@@ -20,7 +20,7 @@ if( first() | dupefinished() )
     Owner = owner()
     TechEnt = Scanner = entity()
     holoCreate( 0, Scanner:pos(), vec(0), Scanner:angles(), vec4(0,255,255,125),"models/hunter/misc/sphere375x375.mdl") holoDisableShading( 0, 1 ) holoParent( 0, Scanner ) holoMaterial( 0, "models/shiny" )
-    Indexer = 1
+    CacheMaker = Indexer = 1
 }
 
 runOnChat(1)
@@ -103,8 +103,9 @@ if(first()|dupefinished())
             findInSphere(From,Scan_r)
             findSortByDistance(From)
             #findSortByDistance(TechEnt:pos())
-            Objects=findToTable()
-            timer( "blueprintCreate", 1 )
+            Objects = findToTable()
+            Objects_Q = Objects:count()
+            timer( "buildCache", 1 )
             Scanner:soundPlay(1,100,"buttons/button6.wav")
         }
         
@@ -132,30 +133,115 @@ if( clk("CloneLaserPos") )
     timer( "CloneLaserPos", 60 )  
 }
 
+if( clk("buildCache") )
+{
+    local Exist = 0
+    while( CacheMaker < Objects_Q && perf() )
+    {
+        local Object = Objects[CacheMaker,entity]
+        if(!Object){ CacheMaker++ break }
+        local Parent = Object:parent()
+        while( CacheLine < ParentCache_Q && perf() )   
+        {
+            CacheLine++
+            local Existing = ParentCache[CacheLine,entity]
+            if( Parent == Existing ){ Exist = 1 break }
+        }
+        
+        if( !Exist )
+        { 
+            if( CacheLine < ParentCache_Q ){ break }
+            ParentCache:pushEntity(Parent) 
+            ParentCache_Q = ParentCache:count()
+        }
+        CacheLine = 0 
+        Exist = 0
+        CacheMaker++  
+    }
+    if(CacheMaker < Objects_Q){ timer( "buildCache", 60 ) }
+    else
+    {
+         CacheMaker = 0
+         timer( "Find", 1 )  
+    }
+}
+
+if( clk( "Find" ) )
+{
+    local Exist = 0
+    while( CacheMaker < Objects_Q && perf() )
+    {
+        local Object = Objects[CacheMaker,entity]
+        while( CacheLine < ParentCache_Q && perf() )   
+        {
+            CacheLine++
+            local Existing = ParentCache[CacheLine,entity]
+            if( Object == Existing ){ Exist = 1 break }
+        }
+        
+        if( Exist )
+        { 
+            IndexesCache:pushNumber( CacheMaker )  
+        }elseif( CacheLine < ParentCache_Q ){ break }
+        CacheLine = 0 
+        Exist = 0        
+        CacheMaker++  
+    }
+    if(CacheMaker < Objects_Q){ timer( "Find", 60 ) }
+    else
+    {
+         CacheMaker = ParentCache_Q
+         timer( "CleanUp", 1 )  
+    }  
+}
+
+if( clk( "CleanUp" ) )
+{
+    while( CacheMaker > 0 && perf() )
+    {
+        Objects:remove(IndexesCache[CacheMaker,number])
+        CacheMaker--
+    }
+    
+    if(CacheMaker > 0){ timer( "CleanUp", 60 ) }
+    else
+    {
+         BlueprintCache = ParentCache:add(Objects)
+         CacheMaker = 0
+         timer( "blueprintCreate", 1 )  
+    }
+}
+
 if( clk("blueprintCreate") )
 {
-    local Q = Objects:count()
+    local Q = BlueprintCache:count()+1
     while( Indexer < Q && perf() )
     {
-        
-        local Object = Objects[Indexer,entity]
+
+        local Object = BlueprintCache[Indexer,entity]
+        if(!Object){ Indexer++ break }
         local Parent_F = Object:parent()
         local Await = 1
-        while( Parent_index < Q && perf() )
+        if( !Parent_F ){ Parent_index = 0 Await=0 }
+        else
         {
-            Parent_index++
-            local Object = Objects[Parent_index,entity]
-            if( Object == Parent_F ){ Await=0 break }
+            while( Parent_index < Q && perf() )
+            {
+                Parent_index++
+                local Object = BlueprintCache[Parent_index,entity]
+                if( Object == Parent_F ){ Await=0 break }
+            }
+            if( Parent_index >= Q ){ Await=0 }
         }
-        if( Parent_index >= Q ){ Await=0 }
+
         if( Await )
         {break}
         else 
         {
             local Index    = Indexer:toString()
             local Parent   = Parent_index:toString()
-            local Position = round(TechEnt:toLocal(Object:pos()),3)
-            local Angle    = round(TechEnt:toLocal(Object:angles()),3)
+            local Position = round(Parent_F:toLocal(Object:pos()),3)
+            local Angle    = round(Parent_F:toLocal(Object:angles()),3)
             local Scale    = round(Object:boxSize(),3)
             local Model    = Object:model()
             local Material = Object:getMaterial()
@@ -191,38 +277,39 @@ if( clk(\"assemble\") )
         I++
         HoloData = Blueprint[I,table]
         local Index    = HoloData[1,number]
-        local Position = Base:toWorld(HoloData[3,vector])
-        local Angle    = Base:toWorld(HoloData[4,angle])
+        local Parent = HoloData[2,number]
+        local Par = Base
+        if( Parent )
+        {
+            Par = holoEntity(Parent)            
+        }
+        else
+        {
+            Par = HoloData[2,entity]  
+            if(!Par){Par=Base}  
+        }
+        local Position = Par:toWorld(HoloData[3,vector])
+        local Angle    = Par:toWorld(HoloData[4,angle])
         local Model    = HoloData[6,string]
+        local Scale    = HoloData[5,vector]
         local Material = HoloData[7,string]
         local Color4   = HoloData[8,vector4]
-        holoCreate(Index,Position,vec(),Angle,Color4,Model) 
+        holoCreate(Index,Position,vec(),Angle,Color4,Model)
+        holoParent(Index,Par)
         holoMaterial(Index,Material)
+        holoScaleUnits(Index,Scale)
     }
     if( I < Q )
     { timer( \"assemble\", 250 ) }
-    else
-    {
-        while( PI < Q && perf() )
-        {
-            PI++
-            HoloData = Blueprint[PI,table]
-            local Index    = HoloData[1,number]
-            local Parent = HoloData[2,number]
-            local Scale  = HoloData[5,vector]
-            holoScaleUnits(Index,Scale)
-            if( Parent )
-            {
-                holoParent(Index,Parent)
-            }
-            else
-            {
-                holoParent(Index,HoloData[2,entity])
-            }
-        }
-        if( PI < Q ){ timer( \"assemble\", 250 ) } 
-    }
 }"
         ClonEnt:remoteSetCode(Blueprint)
+        stopAllTimers()
+        CacheMaker = Indexer = 1
+        Objects:clear() 
+        ParentCache:clear()  
+        IndexesCache:clear()  
+        BlueprintCache:clear() 
+        ParentCache_Q = Objects_Q = CacheLine = Parent_index = 0
+        Blueprint = ""
     }
 }
