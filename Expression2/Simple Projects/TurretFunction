@@ -1,0 +1,69 @@
+@name TurretFunction
+@persist [ Base Major_target ]:entity #MajorSettings#
+@persist [ RailsBase UpperRail BottomRail UpperRail_track BottomRail_track ]:number #Bones# 
+
+if( first() )
+{
+    
+#=========MajorSettings=======#
+    
+    Base = entity()
+    
+    Major_target = owner()
+    
+#==========Functions==========#
+    
+#Aim_______________________________________________________________________________________________________________________________________#
+    
+    function angle aim_angle( Turret:entity , Target_pos:vector )
+    {
+        
+        return Turret:toLocal( ( Target_pos - Turret:pos() ):toAngle() ) / 10    
+        
+    }
+    
+#turret_______________________________________________________________________________________________________________________________________#
+
+    function turret( Base:entity , Pos:vector , Holo_index , Target_pos:vector , Can )
+    {
+        
+        if( changed( Can ) && Can )
+        {
+            
+            holoCreate( Holo_index ) 
+            
+            holoParent( Holo_index , Base )
+            
+            holoPos( Holo_index , Base:toWorld( Pos ) )
+            
+            holoModel( Holo_index , "models/maxofs2d/camera.mdl" )
+            
+        }
+    
+        local Turret = holoEntity( Holo_index )
+
+        local Aim = Turret:toLocal( ( Target_pos - Turret:pos() ):toAngle() ) / 10
+    
+        holoAng( Holo_index , Turret:toWorld( Aim ) )
+
+    }
+    
+#==========HoloSpawn==========#       
+    
+    for( I = 0 , 10 , 1 )
+    {
+        
+        timer( I:toString() , I * 10 )
+
+    }
+
+}
+
+#===========Ticks==========#
+
+interval( 60 )
+
+#===========Bones==========#
+TP = Major_target:pos()
+turret( Base , vec(0,-15,0) , 1 , TP , clk("1") )
+turret( Base , vec(0,15,0) , 2 , TP , clk("2") )
