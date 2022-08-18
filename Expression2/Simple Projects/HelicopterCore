@@ -1,0 +1,134 @@
+#[
+    I am lazy so I just copied the code from the saberator
+    I know I could write it better but some people need it at once
+]#
+
+@name HelicopterCore
+@inputs CamLink:wirelink [Chair Base]:entity Active
+@persist Mass 
+@persist Throttle EnginePower Power 
+@persist EyeAng:angle  
+@persist W S A D Space Shift Fire_L Fire_R
+@persist ApplyForce:vector ApplyAngForce:angle
+@persist VelX VelY VelZ 
+@outputs EffPower Fire_L Fire_R
+
+if(duped()){reset()}
+
+if(first()|dupefinished()){
+ 
+#==========MainSets===========#   
+
+    Mass = Base:mass()
+    Power = 1
+
+}
+
+#============Camera===========#   
+
+if(changed(CamLink)){
+
+CamLink["Activated",number] = 1 
+
+CamLink["Angle",angle] = Base:toWorld(ang())
+
+CamLink["Position",vector] = Base:toWorld(vec(0,0,250))
+
+CamLink["Parent",entity] = Base
+
+}
+
+#===========Ticks==========#
+
+interval(60)
+  
+#=========DataSuck=========#
+
+TorsoAngles = Base:angles()
+
+Vel = Base:vel()
+
+VelL = Base:velL()
+
+AngVel = Base:angVel() 
+
+local VeX = VelL:x()
+
+local VeY = VelL:y()
+
+local VeZ = VelL:z()
+
+if(VeX > 0){ VelX = VeX }else{ VelX = -VeX }
+
+if(VeY > 0){ VelY = VeY }else{ VelY = -VeY }
+
+if(VeZ > 0){ VelZ = VeZ }else{ VelZ = -VeZ }
+
+local Speed = VelX + VelY + VelZ
+
+#=========Sterring=========#
+
+local Driver = Chair:driver()
+if( keyClk( Driver ) )
+{
+    
+    W = Driver:keyPressed("W")
+    
+    S = Driver:keyPressed("S")
+    
+    A = Driver:keyPressed("A")
+    
+    D = Driver:keyPressed("D")
+    
+    Space = Driver:keyJump() 
+    
+    Shift = Driver:keySprint() 
+    
+    Fire_L = Driver:keyAttack1() 
+    
+    Fire_R = Driver:keyAttack1() 
+    
+}
+
+local Cam_HitPos = CamLink["HitPos",vector]
+
+local CA = CamLink["CamAng",angle]
+
+local CamAng = CA + ang(0,0,(D-A)*45)
+
+#==========Engine==========#
+
+if(Space)
+{
+    EyeAng = Base:toLocal(ang(-VelL:x()/17,CamAng:yaw(),VelL:y()/17))
+}
+else
+{
+    EyeAng = Base:toLocal(CamAng)
+}
+
+Throttle = 45 * Active + W*50 - S*25
+
+if(EnginePower < Throttle)
+{
+    EnginePower = EnginePower + Throttle/25  
+}
+
+if(EnginePower > Throttle)
+{
+    EnginePower = EnginePower - (Throttle + Power)/25
+}
+
+local ApplyForce = Base:up() * EnginePower - Vel/20
+
+local ApplyAngForce = EyeAng - AngVel
+
+EffPower = EnginePower * 2
+
+#=========Forces==========#
+
+Base:applyAngForce(ApplyAngForce * Mass)
+
+Base:applyForce(ApplyForce * Mass)
+
+
