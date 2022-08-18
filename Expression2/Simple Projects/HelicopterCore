@@ -42,93 +42,92 @@ CamLink["Parent",entity] = Base
 
 interval(60)
   
-#=========DataSuck=========#
-
-TorsoAngles = Base:angles()
-
-Vel = Base:vel()
-
-VelL = Base:velL()
-
-AngVel = Base:angVel() 
-
-local VeX = VelL:x()
-
-local VeY = VelL:y()
-
-local VeZ = VelL:z()
-
-if(VeX > 0){ VelX = VeX }else{ VelX = -VeX }
-
-if(VeY > 0){ VelY = VeY }else{ VelY = -VeY }
-
-if(VeZ > 0){ VelZ = VeZ }else{ VelZ = -VeZ }
-
-local Speed = VelX + VelY + VelZ
-
-#=========Sterring=========#
-
-local Driver = Chair:driver()
-if( keyClk( Driver ) )
+if( Active )
 {
     
-    W = Driver:keyPressed("W")
+    #=========DataSuck=========#
     
-    S = Driver:keyPressed("S")
+    TorsoAngles = Base:angles()
     
-    A = Driver:keyPressed("A")
+    Vel = Base:vel()
     
-    D = Driver:keyPressed("D")
+    VelL = Base:velL()
     
-    Space = Driver:keyJump() 
+    AngVel = Base:angVel() 
     
-    Shift = Driver:keySprint() 
+    local VeX = VelL:x()
     
-    Fire_L = Driver:keyAttack1() 
+    local VeY = VelL:y()
     
-    Fire_R = Driver:keyAttack1() 
+    local VeZ = VelL:z()
+    
+    if(VeX > 0){ VelX = VeX }else{ VelX = -VeX }
+    
+    if(VeY > 0){ VelY = VeY }else{ VelY = -VeY }
+    
+    if(VeZ > 0){ VelZ = VeZ }else{ VelZ = -VeZ }
+    
+    local Speed = VelX + VelY + VelZ
+    
+    #=========Sterring=========#
+    
+    local Driver = Chair:driver()
+    if( changed( Driver ) )
+    {runOnKeys(Driver,1)}
+    
+    if( keyClk( Driver ) )
+    {
+        W = Driver:keyPressed("W")
+        S = Driver:keyPressed("S")
+        A = Driver:keyPressed("A")
+        D = Driver:keyPressed("D")
+        
+        Space = Driver:keyJump() 
+        Shift = Driver:keySprint() 
+        
+        Fire_L = Driver:keyAttack1() 
+        Fire_R = Driver:keyAttack1() 
+    }
+    
+    local Cam_HitPos = CamLink["HitPos",vector]
+    
+    local CA = CamLink["CamAng",angle]
+    
+    local CamAng = CA + ang(0,0,(D-A)*45)
+    
+    #==========Engine==========#
+    
+    if(Space)
+    {
+        EyeAng = Base:toLocal(ang(-VelL:x()/17,CamAng:yaw(),VelL:y()/17))
+    }
+    else
+    {
+        EyeAng = Base:toLocal(CamAng)
+    }
+    
+    Throttle = 35 * Active + W*30 - S*15
+    
+    if(EnginePower < Throttle)
+    {
+        EnginePower = EnginePower + Throttle/25  
+    }
+    
+    if(EnginePower > Throttle)
+    {
+        EnginePower = EnginePower - (Throttle + Power)/25
+    }
+    
+    local ApplyForce = Base:up() * EnginePower - Vel/20
+    
+    local ApplyAngForce = ( EyeAng - AngVel ) * 3
+    
+    EffPower = EnginePower * 2
+    
+    #=========Forces==========#
+    
+    Base:applyAngForce(ApplyAngForce * Mass)
+    
+    Base:applyForce(ApplyForce * Mass)
     
 }
-
-local Cam_HitPos = CamLink["HitPos",vector]
-
-local CA = CamLink["CamAng",angle]
-
-local CamAng = CA + ang(0,0,(D-A)*45)
-
-#==========Engine==========#
-
-if(Space)
-{
-    EyeAng = Base:toLocal(ang(-VelL:x()/17,CamAng:yaw(),VelL:y()/17))
-}
-else
-{
-    EyeAng = Base:toLocal(CamAng)
-}
-
-Throttle = 45 * Active + W*50 - S*25
-
-if(EnginePower < Throttle)
-{
-    EnginePower = EnginePower + Throttle/25  
-}
-
-if(EnginePower > Throttle)
-{
-    EnginePower = EnginePower - (Throttle + Power)/25
-}
-
-local ApplyForce = Base:up() * EnginePower - Vel/20
-
-local ApplyAngForce = EyeAng - AngVel
-
-EffPower = EnginePower * 2
-
-#=========Forces==========#
-
-Base:applyAngForce(ApplyAngForce * Mass)
-
-Base:applyForce(ApplyForce * Mass)
-
-
