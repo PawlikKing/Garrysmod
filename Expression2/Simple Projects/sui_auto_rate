@@ -1,0 +1,84 @@
+@name AutoRate
+@persist Delay Count [Array Indexes]:array
+    
+#[=====================================================================
+_______________________________________________________________________
+Github:
+    > sui_scoreboard: https://github.com/ZionDevelopers/sui-scoreboard
+    > my_github: https://github.com/PawlikKing/Garrysmod
+
+_______________________________________________________________________
+All possible rating options:
+    > naughty
+    > smile
+    > love
+    > artistic
+    > gold_star
+    > builder
+    > gay
+    > informative
+    > friendly
+    > lol
+    > curvey
+    > best_landvehicle
+    > best_airvehicle
+    > stunter
+    > god
+    
+_______________________________________________________________________
+Listing example
+
+    List = 
+    "
+        @STEAM_0:1:111111111-love
+        @STEAM_0:1:222222222-love
+        @STEAM_0:1:333333333-smile
+        @STEAM_0:1:444444444-friendly
+    "
+    
+_______________________________________________________________________
+Required console commands 
+    > wire_expression2_concmd 1
+     
+======================================================================]#
+    
+if( first() )
+{  
+    
+    #-------------------#
+    #  S E T T I N G S  #
+    #-------------------#
+    
+        Delay = 1000 # 60 default
+        
+        List = 
+        "
+            
+        "
+        
+    #-------------------------------#
+    #  WARNING                      #
+    #  do not touch anything below  #
+    #  to prevent unexpected errors #
+    #-------------------------------#
+    
+        List = List:replace(" ","")
+        Array = List:explode("@")
+        Count = Array:count()
+        function findIndexes()
+        {
+            for( I = 0, Count, 1 ) 
+            {
+                local Data = Array[ I, string ]:explode("-")
+                local Ply  = findPlayerBySteamID( Data[1,string] )
+                if(Ply)
+                {Indexes:pushString( toString( Ply:id() ) + " " + Data[2,string] )}
+            }  
+        } findIndexes()
+        runOnPlayerConnect(1)
+        runOnPlayerDisconnect(1)
+
+}
+interval(Delay)
+if(playerConnectClk()|playerDisconnectClk()){findIndexes()}
+for(I=0,Count,1){concmd("sui_rateuser "+Indexes[I,string])}
