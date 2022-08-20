@@ -1,6 +1,6 @@
 #[
     I am lazy so I just copied the code from the saberator
-    I know I could write it better but some people need it at once
+    Sorry for being lazy tho, just some folks need it at once
 ]#
 
 @name HelicopterCore
@@ -32,7 +32,7 @@ CamLink["Activated",number] = 1
 
 CamLink["Angle",angle] = Base:toWorld(ang())
 
-CamLink["Position",vector] = Base:toWorld(vec(0,0,250))
+CamLink["Position",vector] = Chair:toWorld(vec(0,15,35))
 
 CamLink["Parent",entity] = Base
 
@@ -106,7 +106,7 @@ if( Active )
         EyeAng = Base:toLocal(CamAng)
     }
     
-    Throttle = 35 * Active + W*30 - S*15
+    Throttle = 35 * Active + W*22 - S*22
     
     if(EnginePower < Throttle)
     {
@@ -122,7 +122,7 @@ if( Active )
     
     local ApplyAngForce = ( EyeAng - AngVel ) * 3
     
-    EffPower = EnginePower * 2
+    EffPower = EnginePower /50
     
     #=========Forces==========#
     
