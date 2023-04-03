@@ -1,0 +1,257 @@
+--@name CubeWitch experimental
+--@author Pawik
+--@model models/cheeze/wires/nano_logic.mdl
+
+local owner = owner()
+
+local dl_list = 
+{
+    {'commandblock',"https://dl.dropboxusercontent.com/s/vq20l5dvcrrpj7u/MCblockTest.obj"},   
+    {'commandblock',"https://www.dropbox.com/s/apcg1022yp3bxk5/Mat4.png?dl=1"},
+    {'block',"https://dl.dropboxusercontent.com/s/y6gczviiehl2tyy/blockphys.obj"},
+    {'jukebox',"https://dl.dropboxusercontent.com/s/9y2hbt7v9pcfkw4/Jukebox.obj"},
+    {'jukebox',"https://www.dropbox.com/s/v48n8vhif5ncglk/noteblockmaterial.png?dl=1"},
+    {'plank',"https://dl.dropboxusercontent.com/s/6wzy0kngkyeo65m/plank.obj"},   
+    {'planknormal',"https://www.dropbox.com/s/gvxcw2y1lejkhl0/plankSmaller.png?dl=1"},
+    {'woodnormal',"https://www.dropbox.com/s/e8ofjsqvw9ptd3h/wood.png?dl=1"}
+}
+local dl_amount = table.count( dl_list )
+
+local prop_data = {}
+
+local dl_complete = false
+
+local Index = 1
+
+function saveMesh()
+    
+    local url = dl_list[Index][2]
+
+    if url == "" then Index = Index + 1 saveMesh() return end
+    
+    local name = dl_list[Index][1]
+    
+    if string.endsWith(url, ".obj") then
+        
+        if !http.canRequest() then
+            print(Color(255,150,0),"Awaiting next request...")
+            timer.create("await_req",2,1,function()
+                saveMesh()
+                timer.remove("await_req")
+            end)
+        end
+        
+        print( Color(255,255,255), "Downloading: ", Color(150,255,255), url )
+    
+        http.get( url , function(obj) 
+            
+            local Mesh
+            
+            // Building mesgh
+            local meshReady = coroutine.wrap( function()
+                Mesh = mesh.createFromObj( obj, true, false ) 
+                return true
+            end)
+            
+            // Awaits the mesh
+            hook.add( "think", "meshLoading", function()
+                if meshReady() then
+                    table.insert(prop_data,Index,{'prop_'..name,Mesh})
+                    hook.remove("think","meshLoading")
+                    print( Color(0,255,0), "Done!" )
+                    if Index < dl_amount then Index = Index + 1 saveMesh() return else dl_complete = true return end
+                end
+            end)
+                
+        end)
+        
+    else
+        
+        print( Color(255,255,255), "Material setup: ", Color(150,255,255), url )
+        local Mat = material.create( "VertexLitGeneric" )  
+        Mat:setTextureURL("$basetexture", url)
+        table.insert(prop_data,Index,{'material_'..name,Mat})
+        print( Color(0,255,0), "Done!" )
+        if Index < dl_amount then Index = Index + 1 saveMesh() return else dl_complete = true return end
+
+    end
+    
+end
+
+function dataByName(name) 
+    
+    local data
+    for i=1, dl_amount, 1 do
+        
+        local row = prop_data[i]
+        if row[1] == name then 
+            data = row[2]
+            break
+        end
+        
+    end
+    
+    if !data then print( Color(255,0,0), 'No such data: ', Color(150,150,150), name ) return end
+    return data
+    
+end
+
+local spawned_props = {}
+local spawned_props_amount = 0
+
+chip = chip()
+
+if SERVER then
+    
+    chip:setPos(chip:localToWorld(Vector(0,0,20)))
+    
+    local x = 20
+    testblock = {{Vector(x,-x,x),Vector(x,-x,-x),Vector(x,x,-x),Vector(x),Vector(-x),Vector(-x,-x,x),Vector(-x,x,x),Vector(-x,x,-x)}}
+    
+    local commandblock = prop.createCustom( chip:getPos(), chip:getAngles(), testblock, true)
+    chip:setParent(commandblock)
+    
+    timer.create("chipremesh",1,1,function()
+        net.start( "chipremesh" )
+        net.writeEntity( commandblock )
+        net.send()
+        timer.remove('chipremesh')
+    end)
+    
+    local build_mode = false
+    hook.add( 'PlayerSwitchWeapon', 'buildModeSwitch', function( ply, oldwep, newwep )
+        
+        if ply != owner then return end
+        local holomarker = holograms.create( chip:getPos(), chip:getAngles(), "models/hunter/blocks/cube025x025x025.mdl")
+        if newwep:getModel() == 'models/weapons/w_357.mdl' then  
+            build_mode = true
+            timer.create('markSpawnPos',0.1,0,function()
+                if not isValid(holomarker) then return end
+            end)
+        else
+            build_mode = false
+            timer.remove('markSpawnPos')
+            if not isValid(holomarker) then return end
+            holomarker:remove()
+        end
+        
+    end)
+
+    hook.add( "KeyPress", "interaction", function( ply, key )
+        
+        if ply != owner or not build_mode then return end
+        
+        if not prop.canSpawn() then return end
+        
+        if key == 1 then
+            
+            local eyeTrace = owner:getEyeTrace()
+            local aimEntity = eyeTrace.Entity
+            if not isValid( aimEntity ) then return end
+            local index_destroy = table.keyFromValue( spawned_props, aimEntity)
+            if not index_destroy then return end
+                table.remove( spawned_props, index_destroy )
+                aimEntity:emitSound( "physics/concrete/concrete_impact_soft2.wav", 75, 100, 4, 1)
+                aimEntity:remove()
+            
+            return
+            
+        end
+        
+        if key == 2048 then
+            
+            local eyeTrace = owner:getEyeTrace()
+            local aimPos = eyeTrace.HitPos / 40
+            local x = math.round( aimPos.x, 0 )
+            local y = math.round( aimPos.y, 0 )
+            local z = math.round( aimPos.z, 0 )
+            local place_pos = Vector(x,y,z) * 40 
+            
+            local cubeprop = prop.createCustom( place_pos, Angle(), testblock, true)
+            
+            hook.add( 'think', 'await_phys', function()
+                if not isValid( cubeprop ) then return end
+                    cubeprop:setMass(5)
+                    cubeprop:enableDrag(false)
+                    cubeprop:setPhysMaterial('Wood_Plank')
+                    cubeprop:emitSound( "physics/concrete/concrete_impact_soft3.wav", 75, 100, 4, 1)
+                    local tbl_pos = 1 + table.count(spawned_props)
+                    table.insert(spawned_props,tbl_pos,cubeprop)
+                    net.start('place_block')
+                    net.writeEntity(cubeprop)
+                    net.send()
+                    hook.remove('think', 'await_phys')
+            end)
+            timer.create("delawait_phys",1,1,function() hook.remove('think', 'await_phys') timer.remove("delawait_phys") end)
+            
+            return
+            
+        end
+        
+    end)
+
+    net.receive("dl_complete",function()
+        net.start('refreshprops')
+        net.writeTable( spawned_props )
+        net.send()
+        timer.create( 'refreshprops', 5, 0, function()
+            net.start('refreshprops')
+            net.writeTable( spawned_props )
+            net.send()
+        end)
+    end)
+    
+else
+    
+    saveMesh()
+    
+    local experimentalMesh, experimentalMaterial, command_block
+
+    net.receive("chipremesh", function()
+        command_block = net.readEntity()
+    end)
+    
+    hook.add("think", "awaitDone", function()
+        if not dl_complete then return end
+            print("Download complete!")
+            net.start('dl_complete')
+            net.send()
+            chip:setColor(Color(0,0,0,0))
+            hook.remove("think", "awaitDone")
+            
+            experimentalMesh = dataByName('prop_plank').block
+            experimentalMaterial = dataByName('material_planknormal')
+            
+            command_block:setMesh(dataByName('prop_commandblock').block)
+            command_block:setMeshMaterial(dataByName('material_commandblock'))
+            
+    end) 
+
+    net.receive("refreshprops",function()
+        
+        if not dl_complete then return end
+        
+        spawned_props = net.readTable()
+        spawned_props_amount = table.count(spawned_props)
+  
+        for i=1, spawned_props_amount, 1 do
+            local cprop = spawned_props[i]
+            if not isValid(cprop) then return end
+            cprop:setMesh(experimentalMesh)
+            cprop:setMeshMaterial(experimentalMaterial)
+        end
+        
+    end)
+    
+    net.receive("place_block",function()
+        if not dl_complete then return end
+        local placed_block = net.readEntity()
+        if not isValid( placed_block ) then return end
+        local err
+        pcall(function()
+            placed_block:setMesh(experimentalMesh)
+            placed_block:setMeshMaterial(experimentalMaterial)
+        end,err)
+    end)
+    
+end
