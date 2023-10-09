@@ -12,7 +12,7 @@
       /set base        - determines the base location of the scanner by owner currently aimed entity        
       /set clone       - determines e2 chip where the new code will be pasted by owner currently aimed entity                 
       /set r [number]  - determines the radius of the scanning grid             
-      /clone            - performs the process
+      /clone           - performs the process
 ]#
 
 if( first() | dupefinished() )
